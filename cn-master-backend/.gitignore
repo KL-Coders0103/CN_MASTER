@@ -1,0 +1,29 @@
+node_modules/
+
+
+/generated/prisma
+
+
+
+# Environment variables
+.env
+.env.test
+.env.production
+
+# Build output
+dist/
+build/
+
+# Prisma
+# Note: Prisma schema and migrations should be committed, but not the generated client if placed outside node_modules (we are keeping it default so it's fine).
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS metadata
+.DS_Store
+Thumbs.db
