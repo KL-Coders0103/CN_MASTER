@@ -1,43 +1,70 @@
 import React, { useState } from 'react';
-import { 
-  View, Text, TextInput, StyleSheet, TouchableOpacity, 
-  ScrollView, KeyboardAvoidingView, Platform 
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { useForm, Controller } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Ionicons } from '@expo/vector-icons'; // For the eye button
+import { Ionicons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
+import {
+  NativeStackScreenProps,
+} from '@react-navigation/native-stack';
 
-// 1. Strict Validation Schema (Matches your Notes)
-const registerSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().min(1, 'Email is required').email('Invalid email address'),
-  mobile: z.string().min(1, 'Mobile is required').min(10, 'Mobile must be at least 10 digits').max(15, 'Invalid mobile number'),
-  yearOfStudy: z.string().min(1, 'Year of study is required'),
-  branch: z.string().min(1, 'Branch is required'),
-  section: z.string().min(1, 'Section is required'),
-  password: z.string()
-    .min(1, 'Password is required')
-    .min(8, 'Must be at least 8 characters')
-    .regex(/[A-Z]/, 'Must contain 1 uppercase letter')
-    .regex(/[a-z]/, 'Must contain 1 lowercase letter')
-    .regex(/[0-9]/, 'Must contain 1 number')
-    .regex(/[^A-Za-z0-9]/, 'Must contain 1 special character'),
-  confirmPassword: z.string().min(1, 'Please confirm your password')
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+import GlassCard from '@components/GlassCard';
+import GlassInput from '@components/GlassInput';
+import PrimaryButton from '@components/PrimaryButton';
+import GlowBackground from '@components/GlowBackground';
 
-type RegisterFormData = z.infer<typeof registerSchema>;
+import Colors from '@theme/colors';
+import Spacing from '@theme/spacing';
+import Typography from '@theme/typography';
 
-export default function RegisterScreen() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+import {
+  registerSchema,
+  RegisterFormData,
+} from '@utils/validation';
 
-  const { control, handleSubmit, formState: { errors } } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+import {
+  registerUserAPI,
+} from '@services/authService';
+
+import {
+  RootStackParamList,
+} from '@navigation/types';
+
+type Props = NativeStackScreenProps<
+  RootStackParamList,
+  'Register'
+>;
+
+export default function RegisterScreen({
+  navigation,
+}: Props) {
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [
+    showConfirmPassword,
+    setShowConfirmPassword,
+  ] = useState(false);
+
+  const {
+    control,
+    handleSubmit,
+    formState: {
+      errors,
+      isSubmitting,
+    },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(
+      registerSchema
+    ),
     defaultValues: {
       name: '',
       email: '',
@@ -47,253 +74,372 @@ export default function RegisterScreen() {
       section: '',
       password: '',
       confirmPassword: '',
-    }
+    },
   });
 
-  const onSubmit = (data: RegisterFormData) => {
-    // Yahan hum next step mein backend (OTP API) call karenge
-    console.log('Valid Data Ready for Backend:', data);
-    alert("Validation Passed! Ready for OTP.");
+  const onSubmit = async (
+    data: RegisterFormData
+  ) => {
+    try {
+      const result =
+        await registerUserAPI(data);
+
+      if (result.success) {
+        Toast.show({
+          type: 'success',
+          text1:
+            'Registration Successful',
+        });
+
+        navigation.navigate('OTP', {
+          userId: result.userId,
+        });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: result.message,
+        });
+      }
+    } catch (error: any) {
+      Toast.show({
+        type: 'error',
+        text1:
+          error.message ||
+          'Something went wrong',
+      });
+    }
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={
+        Platform.OS === 'ios'
+          ? 'padding'
+          : undefined
+      }
     >
-      <StatusBar style="light" />
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join CN Master to elevate your edge.</Text>
-        </View>
+      <GlowBackground />
 
-        {/* Name Input */}
-        <Controller
-          control={control}
-          name="name"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <View style={styles.inputGroup}>
-              <TextInput
-                style={[styles.input, errors.name && styles.inputError]}
-                placeholder="Full Name"
-                placeholderTextColor="#666"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
+      <View style={styles.hero}>
+        <Text style={styles.badge}>
+          AI Learning Platform
+        </Text>
+
+        <Text style={styles.title}>
+          Create your{' '}
+          <Text
+            style={styles.titleAccent}
+          >
+            CN Master
+          </Text>{' '}
+          account
+        </Text>
+
+        <Text
+          style={styles.subtitle}
+        >
+          Smarter learning for
+          Computer Networks,
+          powered by premium
+          student experience.
+        </Text>
+      </View>
+
+      <GlassCard style={styles.card}>
+        <ScrollView
+          showsVerticalScrollIndicator={
+            false
+          }
+          contentContainerStyle={
+            styles.formScroll
+          }
+        >
+          <Controller
+            control={control}
+            name="name"
+            render={({ field }) => (
+              <GlassInput
+                label="Full Name"
+                placeholder="Enter name"
+                value={field.value}
+                onChangeText={
+                  field.onChange
+                }
+                error={
+                  errors.name
+                    ?.message
+                }
               />
-              {errors.name && <Text style={styles.errorText}>{errors.name.message}</Text>}
-            </View>
-          )}
-        />
+            )}
+          />
 
-        {/* Email Input */}
-        <Controller
-          control={control}
-          name="email"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <View style={styles.inputGroup}>
-              <TextInput
-                style={[styles.input, errors.email && styles.inputError]}
-                placeholder="Email Address"
-                placeholderTextColor="#666"
+          <Controller
+            control={control}
+            name="email"
+            render={({ field }) => (
+              <GlassInput
+                label="Email"
+                placeholder="Email"
                 keyboardType="email-address"
                 autoCapitalize="none"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
+                value={field.value}
+                onChangeText={
+                  field.onChange
+                }
+                error={
+                  errors.email
+                    ?.message
+                }
               />
-              {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
-            </View>
-          )}
-        />
+            )}
+          />
 
-        {/* Mobile Input */}
-        <Controller
-          control={control}
-          name="mobile"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <View style={styles.inputGroup}>
-              <TextInput
-                style={[styles.input, errors.mobile && styles.inputError]}
-                placeholder="Mobile Number"
-                placeholderTextColor="#666"
+          <Controller
+            control={control}
+            name="mobile"
+            render={({ field }) => (
+              <GlassInput
+                label="Mobile"
+                placeholder="Mobile"
                 keyboardType="phone-pad"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
+                value={field.value}
+                onChangeText={
+                  field.onChange
+                }
+                error={
+                  errors.mobile
+                    ?.message
+                }
               />
-              {errors.mobile && <Text style={styles.errorText}>{errors.mobile.message}</Text>}
-            </View>
-          )}
-        />
+            )}
+          />
 
-        {/* Password Input with Eye Button */}
-        <Controller
-          control={control}
-          name="password"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <View style={styles.inputGroup}>
-              <View style={[styles.passwordContainer, errors.password && styles.inputError]}>
-                <TextInput
-                  style={styles.passwordInput}
-                  placeholder="Password"
-                  placeholderTextColor="#666"
-                  secureTextEntry={!showPassword}
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                  <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="#888" />
-                </TouchableOpacity>
-              </View>
-              {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
-            </View>
-          )}
-        />
+          <Controller
+            control={control}
+            name="yearOfStudy"
+            render={({ field }) => (
+              <GlassInput
+                label="Year"
+                placeholder="Year"
+                value={field.value}
+                onChangeText={
+                  field.onChange
+                }
+                error={
+                  errors
+                    .yearOfStudy
+                    ?.message
+                }
+              />
+            )}
+          />
 
-        {/* Confirm Password */}
-        <Controller
-          control={control}
-          name="confirmPassword"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <View style={styles.inputGroup}>
-              <View style={[styles.passwordContainer, errors.confirmPassword && styles.inputError]}>
-                <TextInput
-                  style={styles.passwordInput}
-                  placeholder="Confirm Password"
-                  placeholderTextColor="#666"
-                  secureTextEntry={!showConfirmPassword}
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                />
-                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeIcon}>
-                  <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={20} color="#888" />
-                </TouchableOpacity>
-              </View>
-              {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>}
-            </View>
-          )}
-        />
+          <Controller
+            control={control}
+            name="branch"
+            render={({ field }) => (
+              <GlassInput
+                label="Branch"
+                placeholder="Branch"
+                value={field.value}
+                onChangeText={
+                  field.onChange
+                }
+                error={
+                  errors.branch
+                    ?.message
+                }
+              />
+            )}
+          />
 
-        {/* Submit Button */}
-        <TouchableOpacity style={styles.primaryButton} onPress={handleSubmit(onSubmit)}>
-          <Text style={styles.buttonText}>Create Account</Text>
-        </TouchableOpacity>
+          <Controller
+            control={control}
+            name="section"
+            render={({ field }) => (
+              <GlassInput
+                label="Section"
+                placeholder="Section"
+                value={field.value}
+                onChangeText={
+                  field.onChange
+                }
+                error={
+                  errors.section
+                    ?.message
+                }
+              />
+            )}
+          />
 
-        {/* Google Login Dummy Button (API later) */}
-        <TouchableOpacity style={styles.googleButton}>
-          <Ionicons name="logo-google" size={20} color="#FFF" style={{ marginRight: 10 }} />
-          <Text style={styles.googleButtonText}>Continue with Google</Text>
-        </TouchableOpacity>
+          <Controller
+            control={control}
+            name="password"
+            render={({ field }) => (
+              <GlassInput
+                label="Password"
+                placeholder="Password"
+                secureTextEntry={
+                  !showPassword
+                }
+                value={field.value}
+                onChangeText={
+                  field.onChange
+                }
+                error={
+                  errors.password
+                    ?.message
+                }
+                rightIcon={
+                  <TouchableOpacity
+                    onPress={() =>
+                      setShowPassword(
+                        !showPassword
+                      )
+                    }
+                  >
+                    <Ionicons
+                      name={
+                        showPassword
+                          ? 'eye'
+                          : 'eye-off'
+                      }
+                      size={22}
+                      color={
+                        Colors
+                          .textMuted
+                      }
+                    />
+                  </TouchableOpacity>
+                }
+              />
+            )}
+          />
 
-        <TouchableOpacity style={styles.loginRedirect}>
-          <Text style={styles.redirectText}>Already have an account? <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Log in</Text></Text>
-        </TouchableOpacity>
+          <Controller
+            control={control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <GlassInput
+                label="Confirm Password"
+                placeholder="Confirm"
+                secureTextEntry={
+                  !showConfirmPassword
+                }
+                value={field.value}
+                onChangeText={
+                  field.onChange
+                }
+                error={
+                  errors
+                    .confirmPassword
+                    ?.message
+                }
+                rightIcon={
+                  <TouchableOpacity
+                    onPress={() =>
+                      setShowConfirmPassword(
+                        !showConfirmPassword
+                      )
+                    }
+                  >
+                    <Ionicons
+                      name={
+                        showConfirmPassword
+                          ? 'eye'
+                          : 'eye-off'
+                      }
+                      size={22}
+                      color={
+                        Colors
+                          .textMuted
+                      }
+                    />
+                  </TouchableOpacity>
+                }
+              />
+            )}
+          />
+        </ScrollView>
 
-      </ScrollView>
+        <View
+          style={styles.buttonArea}
+        >
+          <PrimaryButton
+            title="Create Account"
+            onPress={handleSubmit(
+              onSubmit
+            )}
+            loading={isSubmitting}
+          />
+        </View>
+      </GlassCard>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
-  },
-  scrollContent: {
-    padding: 24,
-    paddingTop: 80,
-    paddingBottom: 40,
-  },
-  header: {
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#A0A0A0',
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 16,
-    color: '#FFF',
-    fontSize: 16,
-  },
-  inputError: {
-    borderColor: '#FF4C4C',
-  },
-  errorText: {
-    color: '#FF4C4C',
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
-  },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-  },
-  passwordInput: {
-    flex: 1,
-    padding: 16,
-    color: '#FFF',
-    fontSize: 16,
-  },
-  eyeIcon: {
-    padding: 16,
-  },
-  primaryButton: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 12,
-  },
-  buttonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  googleButton: {
-    flexDirection: 'row',
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
+    backgroundColor:
+      Colors.background,
+    paddingHorizontal:
+      Spacing.lg,
     justifyContent: 'center',
-    marginBottom: 24,
   },
-  googleButtonText: {
-    color: '#FFF',
-    fontSize: 16,
+
+  hero: {
+    marginBottom:
+      Spacing.lg,
+  },
+
+  badge: {
+    alignSelf: 'flex-start',
+    backgroundColor:
+      '#DBEAFE',
+    color: Colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
     fontWeight: '600',
+    marginBottom: 18,
   },
-  loginRedirect: {
-    alignItems: 'center',
+
+  title: {
+    color:
+      Colors.textPrimary,
+    fontSize: 34,
+    fontWeight: '800',
+    lineHeight: 42,
+    marginBottom: 10,
   },
-  redirectText: {
-    color: '#A0A0A0',
-    fontSize: 14,
-  }
+
+  titleAccent: {
+    color: Colors.primary,
+  },
+
+  subtitle: {
+    color:
+      Colors.textSecondary,
+    fontSize:
+      Typography.bodyMD,
+    lineHeight: 24,
+  },
+
+  card: {
+    height: '60%',
+  },
+
+  formScroll: {
+    paddingBottom: 10,
+  },
+
+  buttonArea: {
+    paddingTop: 16,
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor:
+      Colors.border,
+  },
 });
