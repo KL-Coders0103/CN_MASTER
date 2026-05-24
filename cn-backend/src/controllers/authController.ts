@@ -8,6 +8,7 @@ import {
   registerUserService,
   verifyOtpService,
   resendOtpService,
+  loginUserService,
 } from '../services/authService';
 
 export const registerUser =
@@ -85,6 +86,48 @@ export const verifyOtp =
           success: true,
           message:
             'OTP resent successfully',
+        });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  export const loginUser =
+  async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const {
+        email,
+        password,
+      } = req.body;
+
+      const result =
+        await loginUserService(
+          email,
+          password
+        );
+
+      return res
+        .status(200)
+        .json({
+          success: true,
+          message:
+            'Login successful',
+          token:
+            result.token,
+          user: {
+            id:
+              result.user.id,
+            name:
+              result.user.name,
+            email:
+              result.user.email,
+            role:
+              result.user.role,
+          },
         });
     } catch (error) {
       next(error);

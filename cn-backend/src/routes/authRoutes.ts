@@ -4,6 +4,7 @@ import {
   registerUser,
   verifyOtp,
   resendOtp,
+  loginUser,
 } from '../controllers/authController';
 
 import validate from '../middlewares/validate';
@@ -12,6 +13,7 @@ import {
   registerSchema,
   verifyOtpSchema,
   resendOtpSchema,
+  loginSchema,
 } from '../validations/authValidation';
 
 const router = Router();
@@ -34,6 +36,14 @@ router.post(
     resendOtpSchema
   ),
   resendOtp
+);
+
+router.post(
+  '/login',
+  validate(
+    loginSchema
+  ),
+  loginUser
 );
 
 export default router;

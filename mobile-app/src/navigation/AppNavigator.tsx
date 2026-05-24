@@ -1,37 +1,30 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import RegisterScreen from '../screens/RegisterScreen';
-import OtpScreen from '../screens/OtpScreen';
-import { RootStackParamList } from './types';
+import {
+  NavigationContainer,
+} from '@react-navigation/native';
 
-const Stack =
-  createNativeStackNavigator<RootStackParamList>();
+import GuestNavigator from './GuestNavigator';
+import AuthNavigator from './AuthNavigator';
+
+import {
+  useAuthStore,
+} from '@store/authStore';
 
 export default function AppNavigator() {
+  const token =
+    useAuthStore(
+      state =>
+        state.token
+    );
+
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Register"
-        screenOptions={{
-          headerShown: false,
-          animation: 'slide_from_right',
-          contentStyle: {
-            backgroundColor: '#050816',
-          },
-        }}
-      >
-        <Stack.Screen
-          name="Register"
-          component={RegisterScreen}
-        />
-
-        <Stack.Screen
-          name="OTP"
-          component={OtpScreen}
-        />
-      </Stack.Navigator>
+      {token ? (
+        <AuthNavigator />
+      ) : (
+        <GuestNavigator />
+      )}
     </NavigationContainer>
   );
 }

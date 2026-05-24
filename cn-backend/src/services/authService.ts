@@ -3,6 +3,7 @@ import prisma from '../config/db';
 
 import { generateOTP } from '../utils/generateOtp';
 import { sendOTPEmail } from './emailService';
+import { generateToken } from '../utils/jwt';
 
 interface RegisterData {
   name: string;
@@ -163,6 +164,20 @@ export const verifyOtpService =
       );
     }
 
+    const cooldownMs =
+      60 * 1000;
+
+    if (
+      user.otpResentAt &&
+      Date.now() -
+        user.otpResentAt.getTime() <
+        cooldownMs
+    ) {
+      throw new Error(
+        'Please wait before requesting another OTP'
+      );
+    }
+
     const otp =
       generateOTP();
 
@@ -187,6 +202,8 @@ export const verifyOtpService =
       data: {
         otp,
         otpExpiry,
+        otpResentAt:
+          new Date(),
       },
     });
 
@@ -197,4 +214,58 @@ export const verifyOtpService =
     });
 
     return true;
+  };
+
+export const loginUserService =
+  async (
+    email: string,
+    password: string
+  ) => {
+    const user =
+      await prisma.user.findUnique({
+        where: { email },
+      });
+
+    if (!user) {
+      throw new Error(
+        'Invalid credentials'
+      );
+    }
+
+    if (!user.isVerified) {
+      throw new Error(
+        'Please verify your email first'
+      );
+    }
+
+    if (user.isSuspended) {
+      throw new Error(
+        'Account suspended'
+      );
+    }
+
+    const matched =
+      await bcrypt.compare(
+        password,
+        user.password || ''
+      );
+
+    if (!matched) {
+      throw new Error(
+        'Invalid credentials'
+      );
+    }
+
+    const token =
+      generateToken({
+        userId:
+          user.id,
+        role:
+          user.role,
+      });
+
+    return {
+      token,
+      user,
+    };
   };
