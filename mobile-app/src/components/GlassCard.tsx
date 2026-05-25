@@ -23,28 +23,63 @@ export default function GlassCard({
         style,
       ]}
     >
+      <View
+        style={
+          styles.topGlow
+        }
+      />
+
       {children}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 28,
-    padding: 24,
+const styles =
+  StyleSheet.create({
+    card: {
+      position:
+        'relative',
 
-    borderWidth: 1,
-    borderColor: Colors.border,
+      backgroundColor:
+        Colors.surface,
 
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 10,
+      borderRadius: 30,
+      padding: 24,
+
+      borderWidth: 1,
+      borderColor:
+        'rgba(255,255,255,0.9)',
+
+      overflow:
+        'hidden',
+
+      shadowColor:
+        '#0F172A',
+
+      shadowOffset: {
+        width: 0,
+        height: 14,
+      },
+
+      shadowOpacity:
+        0.08,
+
+      shadowRadius: 28,
+
+      elevation: 6,
     },
-    shadowOpacity: 0.06,
-    shadowRadius: 24,
 
-    elevation: 4,
-  },
-});
+    topGlow: {
+      position:
+        'absolute',
+
+      top: 0,
+      left: 0,
+      right: 0,
+
+      height: 10,
+
+      backgroundColor:
+        'rgba(59,130,246,0.08)',
+    },
+  });

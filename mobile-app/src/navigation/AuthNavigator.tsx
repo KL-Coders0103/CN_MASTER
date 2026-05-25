@@ -4,14 +4,10 @@ import {
   createNativeStackNavigator,
 } from '@react-navigation/native-stack';
 
-import HomeScreen from '@screens/HomeScreen';
-
-import {
-  RootStackParamList,
-} from './types';
+import TabNavigator from './TabNavigator';
 
 const Stack =
-  createNativeStackNavigator<RootStackParamList>();
+  createNativeStackNavigator();
 
 export default function AuthNavigator() {
   return (
@@ -22,9 +18,9 @@ export default function AuthNavigator() {
       }}
     >
       <Stack.Screen
-        name="Home"
+        name="Tabs"
         component={
-          HomeScreen
+          TabNavigator
         }
       />
     </Stack.Navigator>
