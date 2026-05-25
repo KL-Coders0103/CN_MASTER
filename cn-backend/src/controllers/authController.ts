@@ -9,7 +9,12 @@ import {
   verifyOtpService,
   resendOtpService,
   loginUserService,
+  getCurrentUserService,
 } from '../services/authService';
+
+import {
+  AuthRequest,
+} from '../middlewares/authMiddleware';
 
 export const registerUser =
   async (
@@ -127,9 +132,60 @@ export const verifyOtp =
               result.user.email,
             role:
               result.user.role,
+            xp: result.user.xp,
+            streak: result.user.streak,
+            isVerified:
+              result.user.isVerified,
+            avatar:
+              result.user.avatar,
           },
         });
     } catch (error) {
+      next(error);
+    }
+  };
+
+  export const getCurrentUser =
+  async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const userId =
+        req.user?.userId;
+
+      const user =
+        await getCurrentUserService(
+          userId!
+        );
+
+      return res
+        .status(200)
+        .json({
+          success: true,
+          user: {
+            id:
+              user.id,
+            name:
+              user.name,
+            email:
+              user.email,
+            role:
+              user.role,
+            xp:
+              user.xp,
+            streak:
+              user.streak,
+            isVerified:
+              user.isVerified,
+            avatar:
+              user.avatar,
+          },
+        });
+    } catch (
+      error
+    ) {
       next(error);
     }
   };

@@ -5,7 +5,12 @@ import {
   verifyOtp,
   resendOtp,
   loginUser,
+  getCurrentUser,
 } from '../controllers/authController';
+
+import {
+  authMiddleware,
+} from '../middlewares/authMiddleware';
 
 import validate from '../middlewares/validate';
 
@@ -46,4 +51,9 @@ router.post(
   loginUser
 );
 
+router.get(
+  '/me',
+  authMiddleware,
+  getCurrentUser
+);
 export default router;

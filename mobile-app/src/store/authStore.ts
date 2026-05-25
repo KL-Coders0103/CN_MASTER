@@ -5,11 +5,17 @@ import {
   clearAuth,
 } from '@utils/secureStorage';
 
+import {getCurrentUserAPI} from '@services/authService';
+
 interface User {
   id: string;
   name: string;
   email: string;
   role: string;
+  xp?: number;
+  streak?: number;
+  isVerified?: boolean;
+  avatar?: string;
 }
 
 interface AuthState {
@@ -25,6 +31,8 @@ interface AuthState {
     token: string,
     user: User
   ) => void;
+
+  refreshUser: () => Promise<void>;
 
   logout: () => Promise<void>;
 }
@@ -60,6 +68,36 @@ export const useAuthStore =
             token,
             user,
           }),
+
+          refreshUser:
+  async () => {
+    try {
+      const result =
+        await getCurrentUserAPI();
+
+      set(
+        state => ({
+          user: {
+            ...state.user!,
+            ...result.user,
+          },
+        })
+      );
+
+      await saveAuth(
+        useAuthStore.getState()
+          .token!,
+        result.user
+      );
+    } catch (
+      error
+    ) {
+      console.log(
+        'Refresh user failed',
+        error
+      );
+    }
+  },
 
       logout:
         async () => {

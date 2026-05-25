@@ -5,4 +5,11 @@ export type RootStackParamList = {
     userId: string;
   };
   Home: undefined;
+  ModuleDetail:{
+    title: string;
+  }
+  Tabs: undefined;
+  Lesson:{
+    title: string;
+  }
 };

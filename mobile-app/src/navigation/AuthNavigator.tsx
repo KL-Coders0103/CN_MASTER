@@ -6,8 +6,15 @@ import {
 
 import TabNavigator from './TabNavigator';
 
+import ModuleDetailScreen from '@screens/ModuleDetailScreen';
+import LessonScreen from '@screens/LessonScreen';
+
+import {
+  RootStackParamList,
+} from './types';
+
 const Stack =
-  createNativeStackNavigator();
+  createNativeStackNavigator<RootStackParamList>();
 
 export default function AuthNavigator() {
   return (
@@ -21,6 +28,20 @@ export default function AuthNavigator() {
         name="Tabs"
         component={
           TabNavigator
+        }
+      />
+
+      <Stack.Screen
+        name="ModuleDetail"
+        component={
+          ModuleDetailScreen
+        }
+      />
+
+      <Stack.Screen
+        name="Lesson"
+        component={
+          LessonScreen
         }
       />
     </Stack.Navigator>

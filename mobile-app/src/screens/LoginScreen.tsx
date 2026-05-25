@@ -99,6 +99,10 @@ export default function LoginScreen({
         if (
           result.success
         ) {
+          console.log(
+    'LOGIN RESPONSE',
+    result
+  );
           setAuth(
             result.token,
             result.user

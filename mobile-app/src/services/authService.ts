@@ -1,5 +1,8 @@
 import api from './api';
 import { RegisterFormData } from '../utils/validation';
+import {
+  getToken,
+} from '@utils/secureStorage';
 
 export const registerUserAPI = async (
   data: RegisterFormData
@@ -19,3 +22,22 @@ export const registerUserAPI = async (
     throw new Error(message);
   }
 };
+
+export const getCurrentUserAPI =
+  async () => {
+    const token =
+      await getToken();
+
+    const response =
+      await api.get(
+        '/auth/me',
+        {
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+        }
+      );
+
+    return response.data;
+  };
