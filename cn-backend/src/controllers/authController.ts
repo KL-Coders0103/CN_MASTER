@@ -15,6 +15,7 @@ import {
 import {
   AuthRequest,
 } from '../middlewares/authMiddleware';
+import { getAchievements } from '../utils/achievementsEngine';
 
 export const registerUser =
   async (
@@ -160,6 +161,15 @@ export const verifyOtp =
           userId!
         );
 
+      const achievements =
+        getAchievements({
+          xp: user.xp,
+          streak:
+            user.streak,
+          quizCompleted:
+            user.quizCompleted,
+        });
+
       return res
         .status(200)
         .json({
@@ -181,6 +191,7 @@ export const verifyOtp =
               user.isVerified,
             avatar:
               user.avatar,
+            achievements,
           },
         });
     } catch (

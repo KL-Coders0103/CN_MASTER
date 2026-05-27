@@ -4,17 +4,12 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
 import {
   Ionicons,
 } from '@expo/vector-icons';
-
-import {
-  useNavigation,
-} from '@react-navigation/native';
 
 import GlowBackground from '@components/GlowBackground';
 import GlassCard from '@components/GlassCard';
@@ -34,32 +29,19 @@ export default function HomeScreen() {
         state.user
     );
 
-  const navigation =
-    useNavigation<any>();
+  const xp =
+    user?.xp ?? 0;
 
-  const hour =
-    new Date().getHours();
+  const streak =
+    user?.streak ?? 0;
 
-  const greeting =
-    hour < 12
-      ? 'Good Morning'
-      : hour < 18
-      ? 'Good Afternoon'
-      : 'Good Evening';
+  const level =
+    Math.floor(
+      xp / 100
+    ) + 1;
 
-  const date =
-    new Date().toLocaleDateString(
-      'en-IN',
-      {
-        weekday:
-          'long',
-        day: 'numeric',
-        month:
-          'short',
-      }
-    );
-
-  const progress = 14;
+  const levelProgress =
+    xp % 100;
 
   return (
     <View style={styles.root}>
@@ -74,96 +56,83 @@ export default function HomeScreen() {
         }
       >
         <View style={styles.header}>
-          <Text style={styles.greeting}>
-            {greeting}
+          <Text
+            style={
+              styles.greeting
+            }
+          >
+            Hello,
           </Text>
 
-          <Text style={styles.name}>
-            {user?.name}
+          <Text
+            style={
+              styles.name
+            }
+          >
+            {user?.name ||
+              'Learner'}
+            👋
           </Text>
 
-          <Text style={styles.subtitle}>
-            {date} · Keep
-            building your
-            momentum
+          <Text
+            style={
+              styles.subtitle
+            }
+          >
+            Keep building
+            your networking
+            mastery.
           </Text>
         </View>
 
         <GlassCard
           style={
-            styles.heroCard
+            styles.levelCard
           }
         >
-          <Text
-            style={
-              styles.heroBadge
-            }
-          >
-            Learning Momentum
-          </Text>
-
-          <Text
-            style={
-              styles.heroTitle
-            }
-          >
-            You're building
-            consistency.
-          </Text>
-
           <View
             style={
-              styles.statsRow
+              styles.levelRow
             }
           >
             <View>
               <Text
                 style={
-                  styles.statValue
+                  styles.levelLabel
                 }
               >
-                0
+                Current Level
               </Text>
 
               <Text
                 style={
-                  styles.statLabel
+                  styles.levelValue
                 }
               >
-                XP
+                Level {level}
               </Text>
             </View>
 
-            <View>
-              <Text
-                style={
-                  styles.statValue
-                }
-              >
-                0🔥
-              </Text>
-
-              <Text
-                style={
-                  styles.statLabel
-                }
-              >
-                Streak
-              </Text>
-            </View>
+            <Ionicons
+              name="rocket"
+              size={34}
+              color={
+                Colors.primary
+              }
+            />
           </View>
 
           <View
             style={
-              styles.progressTrack
+              styles.track
             }
           >
             <View
               style={[
-                styles.progressFill,
+                styles.fill,
                 {
                   width:
-                    `${progress}%`,
+                    `${levelProgress}%`,
                 },
               ]}
             />
@@ -174,207 +143,360 @@ export default function HomeScreen() {
               styles.progressText
             }
           >
-            {progress}% of
-            learning goal
+            {xp} XP earned
           </Text>
         </GlassCard>
 
-        <GlassCard
+        <View
           style={
-            styles.moduleCard
+            styles.statsRow
           }
         >
-          <View
+          <GlassCard
             style={
-              styles.moduleTop
+              styles.statCard
             }
           >
-            <View>
-              <Text
-                style={
-                  styles.cardTitle
-                }
-              >
-                Active Module
-              </Text>
-
-              <Text
-                style={
-                  styles.moduleName
-                }
-              >
-                Computer
-                Network Basics
-              </Text>
-            </View>
-
             <Ionicons
-              name="play-circle"
-              size={36}
+              name="flash"
+              size={28}
               color={
                 Colors.primary
               }
             />
-          </View>
 
-          <Text
+            <Text
+              style={
+                styles.statValue
+              }
+            >
+              {xp}
+            </Text>
+
+            <Text
+              style={
+                styles.statLabel
+              }
+            >
+              Total XP
+            </Text>
+          </GlassCard>
+
+          <GlassCard
             style={
-              styles.cardText
+              styles.statCard
             }
           >
-            Resume your
-            learning journey
-            and unlock XP.
-          </Text>
-        </GlassCard>
+            <Ionicons
+              name="flame"
+              size={28}
+              color={
+                Colors.warning
+              }
+            />
 
-        <View
-          style={
-            styles.sectionHeader
-          }
-        >
-          <Text
-            style={
-              styles.sectionTitle
-            }
-          >
-            Quick Access
-          </Text>
+            <Text
+              style={
+                styles.statValue
+              }
+            >
+              {streak}
+            </Text>
+
+            <Text
+              style={
+                styles.statLabel
+              }
+            >
+              Day Streak
+            </Text>
+          </GlassCard>
         </View>
 
+       <Text
+  style={
+    styles.sectionTitle
+  }
+>
+  Achievements
+</Text>
+
+<View
+  style={
+    styles.badgesGrid
+  }
+>
+  {user?.achievements?.map(
+    achievement => (
+      <GlassCard
+        key={
+          achievement.id
+        }
+        style={
+          styles.badgeCard
+        }
+      >
         <View
           style={
-            styles.quickRow
+            styles.badgeIcon
           }
         >
-          <TouchableOpacity
-            activeOpacity={
-              0.85
+          <Ionicons
+            name={
+              achievement.id ===
+              'beginner_explorer'
+                ? 'planet'
+                : achievement.id ===
+                  'consistency_flame'
+                ? 'flame'
+                : 'trophy'
             }
-            onPress={() =>
-              navigation.navigate(
-                'Learn'
-              )
+            size={26}
+            color={
+              achievement
+                .unlocked
+                ? Colors.primary
+                : Colors
+                    .textMuted
             }
-          >
-            <GlassCard
-              style={
-                styles.quickCard
-              }
-            >
-              <Ionicons
-                name="book"
-                size={26}
-                color={
-                  Colors.primary
-                }
-              />
-
-              <Text
-                style={
-                  styles.quickText
-                }
-              >
-                Learn
-              </Text>
-            </GlassCard>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            activeOpacity={
-              0.85
-            }
-            onPress={() =>
-              navigation.navigate(
-                'AI'
-              )
-            }
-          >
-            <GlassCard
-              style={
-                styles.quickCard
-              }
-            >
-              <Ionicons
-                name="sparkles"
-                size={26}
-                color={
-                  Colors.primary
-                }
-              />
-
-              <Text
-                style={
-                  styles.quickText
-                }
-              >
-                AI
-              </Text>
-            </GlassCard>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            activeOpacity={
-              0.85
-            }
-            onPress={() =>
-              navigation.navigate(
-                'Quiz'
-              )
-            }
-          >
-            <GlassCard
-              style={
-                styles.quickCard
-              }
-            >
-              <Ionicons
-                name="flash"
-                size={26}
-                color={
-                  Colors.primary
-                }
-              />
-
-              <Text
-                style={
-                  styles.quickText
-                }
-              >
-                Quiz
-              </Text>
-            </GlassCard>
-          </TouchableOpacity>
+          />
         </View>
+
+        <Text
+          style={
+            styles.badgeTitle
+          }
+        >
+          {
+            achievement.title
+          }
+        </Text>
+
+        <Text
+          style={
+            achievement.unlocked
+              ? styles.badgeStatus
+              : styles
+                  .lockedText
+          }
+        >
+          {achievement
+            .unlocked
+            ? 'Unlocked'
+            : 'Locked'}
+        </Text>
+      </GlassCard>
+    )
+  )}
+</View>
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  root:{flex:1,backgroundColor:Colors.background},
-  content:{paddingTop:70,paddingBottom:40,paddingHorizontal:Spacing.lg},
-  header:{marginBottom:Spacing.lg},
-  greeting:{color:Colors.primary,fontWeight:'600',marginBottom:6},
-  name:{fontSize:Typography.headingXL,fontWeight:'800',color:Colors.textPrimary,marginBottom:8},
-  subtitle:{color:Colors.textSecondary,fontSize:Typography.bodyMD},
-  heroCard:{marginBottom:20},
-  heroBadge:{color:Colors.primary,fontWeight:'600',marginBottom:10},
-  heroTitle:{color:Colors.textPrimary,fontSize:Typography.headingMD,fontWeight:'700',marginBottom:20},
-  statsRow:{flexDirection:'row',justifyContent:'space-between',marginBottom:20},
-  statValue:{fontSize:30,fontWeight:'800',color:Colors.primary},
-  statLabel:{color:Colors.textSecondary,marginTop:4},
-  progressTrack:{height:10,backgroundColor:'#E2E8F0',borderRadius:999,overflow:'hidden'},
-  progressFill:{height:'100%',borderRadius:999,backgroundColor:Colors.primary},
-  progressText:{marginTop:10,color:Colors.textSecondary,fontSize:Typography.bodySM},
-  moduleCard:{marginBottom:24},
-  moduleTop:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:12},
-  moduleName:{color:Colors.textPrimary,fontSize:Typography.bodyLG,fontWeight:'700',marginTop:6},
-  cardTitle:{color:Colors.textSecondary,fontSize:Typography.bodySM,marginBottom:2},
-  cardText:{color:Colors.textSecondary,lineHeight:22},
-  sectionHeader:{marginBottom:14},
-  sectionTitle:{color:Colors.textPrimary,fontWeight:'700',fontSize:Typography.bodyLG},
-  quickRow:{flexDirection:'row',justifyContent:'space-between'},
-  quickCard:{width:100,alignItems:'center',paddingVertical:22},
-  quickText:{marginTop:10,color:Colors.textPrimary,fontWeight:'600'},
-});
+const styles =
+  StyleSheet.create({
+    root:{
+      flex:1,
+      backgroundColor:
+        Colors.background,
+    },
+
+    content:{
+      paddingTop:70,
+      paddingBottom:120,
+      paddingHorizontal:
+        Spacing.lg,
+    },
+
+    header:{
+      marginBottom:24,
+    },
+
+    greeting:{
+      color:
+        Colors.textSecondary,
+      fontSize:
+        Typography.bodyLG,
+    },
+
+    name:{
+      color:
+        Colors.textPrimary,
+      fontSize:
+        Typography.headingXL,
+      fontWeight:
+        '800',
+      marginTop:4,
+    },
+
+    subtitle:{
+      color:
+        Colors.textSecondary,
+      marginTop:10,
+      lineHeight:24,
+      fontSize:
+        Typography.bodyMD,
+    },
+
+    levelCard:{
+      marginBottom:24,
+    },
+
+    levelRow:{
+      flexDirection:'row',
+      justifyContent:
+        'space-between',
+      alignItems:
+        'center',
+      marginBottom:20,
+    },
+
+    levelLabel:{
+      color:
+        Colors.textSecondary,
+    },
+
+    levelValue:{
+      color:
+        Colors.textPrimary,
+      fontWeight:'800',
+      fontSize:26,
+      marginTop:6,
+    },
+
+    track:{
+      height:10,
+      backgroundColor:
+        '#E2E8F0',
+      borderRadius:999,
+      overflow:'hidden',
+    },
+
+    fill:{
+      height:'100%',
+      backgroundColor:
+        Colors.primary,
+      borderRadius:999,
+    },
+
+    progressText:{
+      marginTop:10,
+      color:
+        Colors.textSecondary,
+    },
+
+    statsRow:{
+      flexDirection:'row',
+      justifyContent:
+        'space-between',
+      marginBottom:28,
+    },
+
+    statCard:{
+      width:'48%',
+      alignItems:
+        'center',
+    },
+
+    statValue:{
+      color:
+        Colors.textPrimary,
+      fontWeight:'800',
+      fontSize:28,
+      marginTop:12,
+    },
+
+    statLabel:{
+      color:
+        Colors.textSecondary,
+      marginTop:6,
+    },
+
+    sectionTitle:{
+      color:
+        Colors.textPrimary,
+      fontSize:
+        Typography.bodyLG,
+      fontWeight:'700',
+      marginBottom:16,
+    },
+
+    badgeRow:{
+      flexDirection:'row',
+      alignItems:
+        'center',
+    },
+
+    badge:{
+      width:52,
+      height:52,
+      borderRadius:16,
+      justifyContent:
+        'center',
+      alignItems:
+        'center',
+      backgroundColor:
+        'rgba(29,78,216,0.08)',
+    },
+
+    badgeInfo:{
+      flex:1,
+      marginLeft:14,
+    },
+
+    badgeText:{
+      color:
+        Colors.textSecondary,
+      lineHeight:22,
+    },
+
+    badgesGrid:{
+      flexDirection:'row',
+      justifyContent:
+        'space-between',
+    },
+
+    badgeCard:{
+      width:'31%',
+      alignItems:
+        'center',
+      paddingVertical:20,
+    },
+
+    badgeIcon:{
+      width:52,
+      height:52,
+      borderRadius:16,
+      justifyContent:
+        'center',
+      alignItems:
+        'center',
+      backgroundColor:
+        'rgba(29,78,216,0.08)',
+      marginBottom:14,
+    },
+
+    badgeTitle:{
+      color:
+        Colors.textPrimary,
+      fontWeight:'700',
+      textAlign:'center',
+      fontSize:13,
+      marginBottom:8,
+    },
+
+    badgeStatus:{
+      color:
+        Colors.success,
+      fontWeight:'600',
+      fontSize:12,
+    },
+
+    lockedText:{
+      color:
+        Colors.textMuted,
+      fontWeight:'600',
+      fontSize:12,
+    },
+  });

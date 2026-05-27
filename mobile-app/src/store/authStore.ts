@@ -16,6 +16,12 @@ interface User {
   streak?: number;
   isVerified?: boolean;
   avatar?: string;
+
+  achievements?: {
+    id: string;
+    title: string;
+    unlocked: boolean;
+  }[];
 }
 
 interface AuthState {
