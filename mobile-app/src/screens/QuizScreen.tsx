@@ -18,8 +18,28 @@ import GlassCard from '@components/GlassCard';
 import Colors from '@theme/colors';
 import Spacing from '@theme/spacing';
 import Typography from '@theme/typography';
+import {
+  useNavigation,
+} from '@react-navigation/native';
+
+import {
+  NativeStackNavigationProp,
+} from '@react-navigation/native-stack';
+
+import {
+  RootStackParamList,
+} from '@navigation/types';
 
 export default function QuizScreen() {
+
+  type NavProp =
+  NativeStackNavigationProp<
+    RootStackParamList
+  >;
+
+const navigation =
+  useNavigation<NavProp>();
+
   return (
     <View style={styles.root}>
       <GlowBackground />
@@ -109,6 +129,11 @@ export default function QuizScreen() {
         <TouchableOpacity
           activeOpacity={
             0.85
+          }
+          onPress={() =>
+            navigation.navigate(
+              'QuizPlay'
+            )
           }
         >
           <GlassCard

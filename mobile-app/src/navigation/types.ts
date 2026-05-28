@@ -12,4 +12,5 @@ export type RootStackParamList = {
   Lesson:{
     title: string;
   }
+  QuizPlay: undefined;
 };

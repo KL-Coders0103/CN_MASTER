@@ -3,13 +3,14 @@ import {
   StyleSheet,
   View,
   ViewStyle,
+  StyleProp,
 } from 'react-native';
 
 import Colors from '@theme/colors';
 
 interface GlassCardProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export default function GlassCard({

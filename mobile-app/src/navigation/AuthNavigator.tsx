@@ -8,6 +8,7 @@ import TabNavigator from './TabNavigator';
 
 import ModuleDetailScreen from '@screens/ModuleDetailScreen';
 import LessonScreen from '@screens/LessonScreen';
+import QuizPlayScreen from '@screens/QuizPlayScreen';
 
 import {
   RootStackParamList,
@@ -42,6 +43,13 @@ export default function AuthNavigator() {
         name="Lesson"
         component={
           LessonScreen
+        }
+      />
+
+      <Stack.Screen
+        name="QuizPlay"
+        component={
+          QuizPlayScreen
         }
       />
     </Stack.Navigator>
