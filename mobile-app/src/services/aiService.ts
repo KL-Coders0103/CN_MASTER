@@ -2,7 +2,7 @@ import api from './api';
 
 export const chatAIAPI =
   async (
-    prompt: string
+    messages: any[]
   ) => {
     const response =
       await fetch(
@@ -18,7 +18,7 @@ export const chatAIAPI =
 
           body:
             JSON.stringify({
-              prompt,
+              messages,
             }),
         }
       );

@@ -22,6 +22,11 @@ import {
   chatAIAPI,
 } from '@services/aiService';
 
+interface Message {
+  role: 'user' | 'ai';
+  content: string;
+}
+
 export default function AIMentorScreen() {
   const [
     prompt,
@@ -37,6 +42,16 @@ export default function AIMentorScreen() {
     displayedResponse,
     setDisplayedResponse,
   ] = useState('');
+
+  const [
+    messages,
+    setMessages,
+  ] = useState<Message[]>([]);
+
+  const [
+    currentTopic, 
+    setCurrentTopic,
+  ] = useState('Computer Networks');
 
   const [
     loading,
@@ -60,14 +75,45 @@ export default function AIMentorScreen() {
         setResponse(
           ''
         );
-        
+
+        setMessages(
+          prev => [
+            ...prev, {
+              role: 'user', 
+              content: prompt,
+            },
+          ]
+        );
+
+        const history = [
+          {
+            role: 'system',
+            content: `Current topic: ${currentTopic}. You are an expert mentor in this topic. Answer the user's question in a clear and concise manner, providing explanations and examples when necessary. If the user asks for clarification, provide more details or rephrase your answer. Always be helpful and patient.`,
+          },
+          ...messages,
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ].slice(-6).map(
+          msg => ({
+            role: msg.role === 'ai'? 'assistant' : msg.role,
+            content: msg.content,
+          })
+        );
+
         const result =
           await chatAIAPI(
-            prompt
+            history
           );
 
-        setResponse(
-        result.answer
+        setMessages(
+        prev => [
+          ...prev, {
+            role: 'ai',
+            content: result.answer,
+          },
+        ]
       );
 
       setDisplayedResponse(
@@ -143,6 +189,62 @@ export default function AIMentorScreen() {
           doubts.
         </Text>
 
+        <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={
+              false
+            }
+            style={
+              styles.topicRow
+            }
+          >
+            {[
+              'Computer Networks',
+              'OSI Model',
+              'TCP/IP',
+              'Routing',
+              'DNS',
+            ].map(
+              topic => (
+                <TouchableOpacity
+                  key={
+                    topic
+                  }
+                  activeOpacity={
+                    0.85
+                  }
+                  onPress={() =>
+                    setCurrentTopic(
+                      topic
+                    )
+                  }
+                  style={[
+                    styles.topicChip,
+
+                    currentTopic ===
+                      topic && {
+                      backgroundColor:
+                        Colors.primary,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.topicText,
+
+                      currentTopic ===
+                        topic && {
+                        color:'#fff',
+                      },
+                    ]}
+                  >
+                    {topic}
+                  </Text>
+                </TouchableOpacity>
+              )
+            )}
+          </ScrollView>
+
         <GlassCard>
           <TextInput
             value={
@@ -187,31 +289,42 @@ export default function AIMentorScreen() {
           </TouchableOpacity>
         </GlassCard>
 
-        {(loading ||
-          displayedResponse) && (
-          <GlassCard
+        {messages.map(
+          (msg, idx) => (
+            <View key={idx} 
+              style={[
+                styles.messageRow,
+
+                msg.role === 'user' ? styles.userRow : styles.aiRow,
+              ]}
+            >
+              <GlassCard
+                style={[
+                  styles.messageBubble,
+
+                  msg.role === 'user' ? styles.userBubble : styles.aiBubble,
+                ]}
+              >
+                <Text
+                  style={
+                    styles.messageText
+                  }
+                >
+                  {msg.role === 'ai' && idx === messages.length - 1 ? displayedResponse : msg.content}
+                </Text>
+              </GlassCard>
+            </View>
+          )
+        )}
+
+        {loading && (
+          <Text
             style={
-              styles.responseCard
+              styles.thinkingText
             }
           >
-            <Text
-              style={
-                styles.responseTitle
-              }
-            >
-              {loading
-                ? 'AI is thinking...'
-                : 'AI Response'}
-            </Text>
-
-            <Text
-              style={
-                styles.responseText
-              }
-            >
-              {displayedResponse}
-            </Text>
-          </GlassCard>
+            AI is thinking...
+          </Text>
         )}
       </ScrollView>
     </View>
@@ -296,5 +409,57 @@ const styles =
       lineHeight:28,
       fontSize:
         Typography.bodyMD,
+    },
+
+    messageRow:{
+      marginTop:16,
+    },
+
+    userRow:{
+      alignItems:'flex-end',
+    },
+
+    aiRow:{
+      alignItems:'flex-start',
+    },
+
+    messageBubble:{
+      maxWidth:'85%',
+    },
+
+    userBubble:{
+      backgroundColor: Colors.primary,
+    },
+
+    aiBubble:{},
+
+    messageText:{
+      color: Colors.textPrimary,
+      lineHeight:26,
+      fontSize: Typography.bodyMD,
+    },
+
+    thinkingText:{
+      color: Colors.textSecondary,
+      marginTop:16,
+    },
+
+    topicRow:{
+      marginBottom:20,
+    },
+
+    topicChip:{
+      paddingHorizontal:16,
+      paddingVertical:10,
+      borderRadius:999,
+      backgroundColor:
+        Colors.surface,
+      marginRight:10,
+    },
+
+    topicText:{
+      color:
+        Colors.textSecondary,
+      fontWeight:'600',
     },
   });

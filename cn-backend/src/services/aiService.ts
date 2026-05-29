@@ -2,7 +2,7 @@ import ollama from 'ollama';
 
 export const askAIService =
   async (
-    prompt: string
+    messages: any[]
   ) => {
     return ollama.chat({
       model:
@@ -25,24 +25,19 @@ export const askAIService =
 
           content:
             `
-You are CN Master AI Mentor.
+      You are CN Master AI Mentor.
 
-Teach Computer Networks
-clearly and simply.
+      Teach Computer Networks
+      clearly and simply.
 
-Use:
-- short explanations
-- practical examples
-- beginner friendly language
-`,
+      Use:
+      - short explanations
+      - practical examples
+      - beginner friendly language
+      `,
         },
 
-        {
-          role:
-            'user',
-          content:
-            prompt,
-        },
+        ...messages,
       ],
     });
   };

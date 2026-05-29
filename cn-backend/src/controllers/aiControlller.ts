@@ -16,12 +16,12 @@ export const chatAI =
   ) => {
     try {
       const {
-        prompt,
+        messages,
       } = req.body;
 
       const stream =
         await askAIService(
-          prompt
+          messages
         );
 
       res.setHeader(
