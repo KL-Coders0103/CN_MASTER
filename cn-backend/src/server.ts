@@ -8,6 +8,7 @@ import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/authRoutes';
 import errorHandler from './middlewares/errorHandler';
 import quizRoutes from './routes/quizRoutes';
+import aiRoutes from './routes/aiRoutes';
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.use(limiter);
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/quiz', quizRoutes);
+app.use('/api/ai', aiRoutes);
 
 // 404
 app.use((req, res) => {

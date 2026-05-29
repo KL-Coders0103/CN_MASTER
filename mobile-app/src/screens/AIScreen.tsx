@@ -1,16 +1,15 @@
-import React from 'react';
+import React, {
+  useState,
+} from 'react';
 
 import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-
-import {
-  Ionicons,
-} from '@expo/vector-icons';
 
 import GlowBackground from '@components/GlowBackground';
 import GlassCard from '@components/GlassCard';
@@ -19,261 +18,201 @@ import Colors from '@theme/colors';
 import Spacing from '@theme/spacing';
 import Typography from '@theme/typography';
 
-export default function AIScreen() {
+import {
+  chatAIAPI,
+} from '@services/aiService';
+
+export default function AIMentorScreen() {
+  const [
+    prompt,
+    setPrompt,
+  ] = useState('');
+
+  const [
+    response,
+    setResponse,
+  ] = useState('');
+
+  const [
+    displayedResponse,
+    setDisplayedResponse,
+  ] = useState('');
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
+
+  const askAI =
+    async () => {
+      if (
+        loading ||
+        !prompt.trim()
+      ) {
+        return;
+      }
+
+      try {
+        setLoading(
+          true
+        );
+
+        setResponse(
+          ''
+        );
+        
+        const result =
+          await chatAIAPI(
+            prompt
+          );
+
+        setResponse(
+        result.answer
+      );
+
+      setDisplayedResponse(
+        ''
+      );
+
+      let index = 0;
+
+      const interval =
+        setInterval(
+          () => {
+            index++;
+
+            setDisplayedResponse(
+              result.answer.slice(
+                0,
+                index
+              )
+            );
+
+            if (
+              index >=
+              result.answer
+                .length
+            ) {
+              clearInterval(
+                interval
+              );
+            }
+          },
+          15
+        );
+      } catch (
+        error
+      ) {
+        console.log(
+          error
+        );
+      } finally {
+        setLoading(
+          false
+        );
+      }
+    };
+
   return (
     <View style={styles.root}>
       <GlowBackground />
 
       <ScrollView
-        showsVerticalScrollIndicator={
-          false
-        }
         contentContainerStyle={
           styles.content
         }
+        showsVerticalScrollIndicator={
+          false
+        }
       >
-        <View style={styles.header}>
-          <Text
-            style={
-              styles.badge
-            }
-          >
-            AI Mentor
-          </Text>
-
-          <Text
-            style={
-              styles.title
-            }
-          >
-            Learn with your
-            smart assistant
-          </Text>
-
-          <Text
-            style={
-              styles.subtitle
-            }
-          >
-            Ask doubts,
-            simplify topics
-            and learn more
-            efficiently.
-          </Text>
-        </View>
-
-        <GlassCard
+        <Text
           style={
-            styles.heroCard
+            styles.title
           }
         >
-          <Ionicons
-            name="sparkles"
-            size={36}
-            color={
-              Colors.primary
-            }
-          />
-
-          <Text
-            style={
-              styles.heroTitle
-            }
-          >
-            AI-powered
-            learning support
-          </Text>
-
-          <Text
-            style={
-              styles.heroText
-            }
-          >
-            Your mentor will
-            help explain
-            networking
-            concepts and
-            guide your
-            learning journey.
-          </Text>
-        </GlassCard>
+          AI Mentor
+        </Text>
 
         <Text
           style={
-            styles.sectionTitle
+            styles.subtitle
           }
         >
-          AI Actions
+          Ask your
+          networking
+          doubts.
         </Text>
 
-        <TouchableOpacity
-          activeOpacity={
-            0.85
-          }
-        >
-          <GlassCard
+        <GlassCard>
+          <TextInput
+            value={
+              prompt
+            }
+            onChangeText={
+              setPrompt
+            }
+            placeholder="Explain TCP handshake"
+            placeholderTextColor={
+              Colors.textMuted
+            }
+            multiline
             style={
-              styles.actionCard
+              styles.input
+            }
+          />
+
+          <TouchableOpacity
+            activeOpacity={
+              0.85
+            }
+            style={
+              styles.button
+            }
+            onPress={
+              askAI
+            }
+            disabled={
+              loading
             }
           >
-            <View
+            <Text
               style={
-                styles.actionRow
+                styles.buttonText
               }
             >
-              <Ionicons
-                name="help-circle"
-                size={28}
-                color={
-                  Colors.primary
-                }
-              />
+              {loading
+                ? 'Thinking...'
+                : 'Ask AI'}
+            </Text>
+          </TouchableOpacity>
+        </GlassCard>
 
-              <View
-                style={
-                  styles.actionInfo
-                }
-              >
-                <Text
-                  style={
-                    styles.actionTitle
-                  }
-                >
-                  Ask Doubt
-                </Text>
-
-                <Text
-                  style={
-                    styles.actionText
-                  }
-                >
-                  Ask questions
-                  instantly
-                </Text>
-              </View>
-
-              <Ionicons
-                name="chevron-forward"
-                size={22}
-                color={
-                  Colors.textMuted
-                }
-              />
-            </View>
-          </GlassCard>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          activeOpacity={
-            0.85
-          }
-        >
+        {(loading ||
+          displayedResponse) && (
           <GlassCard
             style={
-              styles.actionCard
+              styles.responseCard
             }
           >
-            <View
+            <Text
               style={
-                styles.actionRow
+                styles.responseTitle
               }
             >
-              <Ionicons
-                name="bulb"
-                size={28}
-                color={
-                  Colors.primary
-                }
-              />
+              {loading
+                ? 'AI is thinking...'
+                : 'AI Response'}
+            </Text>
 
-              <View
-                style={
-                  styles.actionInfo
-                }
-              >
-                <Text
-                  style={
-                    styles.actionTitle
-                  }
-                >
-                  Explain Topic
-                </Text>
-
-                <Text
-                  style={
-                    styles.actionText
-                  }
-                >
-                  Deep concept
-                  explanations
-                </Text>
-              </View>
-
-              <Ionicons
-                name="chevron-forward"
-                size={22}
-                color={
-                  Colors.textMuted
-                }
-              />
-            </View>
-          </GlassCard>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          activeOpacity={
-            0.85
-          }
-        >
-          <GlassCard>
-            <View
+            <Text
               style={
-                styles.actionRow
+                styles.responseText
               }
             >
-              <Ionicons
-                name="layers"
-                size={28}
-                color={
-                  Colors.primary
-                }
-              />
-
-              <View
-                style={
-                  styles.actionInfo
-                }
-              >
-                <Text
-                  style={
-                    styles.actionTitle
-                  }
-                >
-                  Simplify
-                  Concept
-                </Text>
-
-                <Text
-                  style={
-                    styles.actionText
-                  }
-                >
-                  Learn in
-                  simpler
-                  language
-                </Text>
-              </View>
-
-              <Ionicons
-                name="chevron-forward"
-                size={22}
-                color={
-                  Colors.textMuted
-                }
-              />
-            </View>
+              {displayedResponse}
+            </Text>
           </GlassCard>
-        </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );
@@ -281,121 +220,81 @@ export default function AIScreen() {
 
 const styles =
   StyleSheet.create({
-    root: {
-      flex: 1,
+    root:{
+      flex:1,
       backgroundColor:
         Colors.background,
     },
 
-    content: {
-      paddingTop: 70,
-      paddingBottom: 120,
+    content:{
+      paddingTop:70,
+      paddingBottom:120,
       paddingHorizontal:
         Spacing.lg,
     },
 
-    header: {
-      marginBottom: 24,
-    },
-
-    badge: {
-      alignSelf:
-        'flex-start',
-      backgroundColor:
-        '#DBEAFE',
-      color:
-        Colors.primary,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 999,
-      fontWeight: '600',
-      marginBottom: 18,
-    },
-
-    title: {
+    title:{
       color:
         Colors.textPrimary,
       fontSize:
         Typography.headingXL,
-      fontWeight:
-        '800',
-      marginBottom: 10,
+      fontWeight:'800',
     },
 
-    subtitle: {
+    subtitle:{
       color:
         Colors.textSecondary,
-      lineHeight: 24,
+      marginTop:8,
+      marginBottom:24,
       fontSize:
         Typography.bodyMD,
     },
 
-    heroCard: {
-      marginBottom: 28,
+    input:{
+      minHeight:120,
+      color:
+        Colors.textPrimary,
+      fontSize:
+        Typography.bodyMD,
+      textAlignVertical:
+        'top',
+    },
+
+    button:{
+      marginTop:18,
+      backgroundColor:
+        Colors.primary,
+      borderRadius:18,
+      paddingVertical:14,
       alignItems:
         'center',
     },
 
-    heroTitle: {
-      color:
-        Colors.textPrimary,
+    buttonText:{
+      color:'#fff',
+      fontWeight:'700',
       fontSize:
-        Typography.headingMD,
-      fontWeight:
-        '700',
-      marginTop: 14,
-      marginBottom: 10,
-      textAlign:
-        'center',
+        Typography.bodyMD,
     },
 
-    heroText: {
-      color:
-        Colors.textSecondary,
-      textAlign:
-        'center',
-      lineHeight: 24,
+    responseCard:{
+      marginTop:24,
     },
 
-    sectionTitle: {
+    responseTitle:{
       color:
         Colors.textPrimary,
+      fontWeight:'700',
+      marginBottom:12,
       fontSize:
         Typography.bodyLG,
-      fontWeight:
-        '700',
-      marginBottom: 16,
     },
 
-    actionCard: {
-      marginBottom: 16,
-    },
-
-    actionRow: {
-      flexDirection:
-        'row',
-      alignItems:
-        'center',
-    },
-
-    actionInfo: {
-      flex: 1,
-      marginLeft: 14,
-    },
-
-    actionTitle: {
-      color:
-        Colors.textPrimary,
-      fontWeight:
-        '700',
-      fontSize:
-        Typography.bodyMD,
-      marginBottom: 4,
-    },
-
-    actionText: {
+    responseText:{
       color:
         Colors.textSecondary,
-      lineHeight: 22,
+      lineHeight:28,
+      fontSize:
+        Typography.bodyMD,
     },
   });
