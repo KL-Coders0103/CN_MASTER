@@ -7,10 +7,16 @@ export type RootStackParamList = {
   Home: undefined;
   ModuleDetail:{
     title: string;
-  }
-  Tabs: undefined;
+  };
+  Tabs: {
+    screen?: string;
+    params?: any;
+  };
   Lesson:{
     title: string;
-  }
+  };
   QuizPlay: undefined;
+  AIScreen: {
+    topic?: string;
+  };
 };

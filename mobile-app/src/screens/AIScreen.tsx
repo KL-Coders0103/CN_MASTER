@@ -1,5 +1,6 @@
 import React, {
   useState,
+  useEffect,
 } from 'react';
 
 import {
@@ -21,6 +22,10 @@ import Typography from '@theme/typography';
 import {
   chatAIAPI,
 } from '@services/aiService';
+
+import { useRoute } from '@react-navigation/native';
+import { RouteProp } from '@react-navigation/native';
+import { RootStackParamList } from '@navigation/types';
 
 interface Message {
   role: 'user' | 'ai';
@@ -48,10 +53,16 @@ export default function AIMentorScreen() {
     setMessages,
   ] = useState<Message[]>([]);
 
-  const [
-    currentTopic, 
-    setCurrentTopic,
-  ] = useState('Computer Networks');
+  type AIROuteProp = RouteProp<RootStackParamList, 'AIScreen'>;
+  const route = useRoute<AIROuteProp>();
+
+  useEffect(() => {
+    if(route.params?.topic) {
+      setCurrentTopic(route.params.topic);
+    }
+  }, [route.params?.topic]);
+
+  const [ currentTopic, setCurrentTopic ] = useState(route.params?.topic || 'Computer Networks');
 
   const [
     loading,
@@ -199,11 +210,11 @@ export default function AIMentorScreen() {
             }
           >
             {[
-              'Computer Networks',
+              'Introduction to CN',
               'OSI Model',
               'TCP/IP',
-              'Routing',
-              'DNS',
+              'Network Devices',
+              'IP Addressing',
             ].map(
               topic => (
                 <TouchableOpacity

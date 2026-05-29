@@ -213,7 +213,10 @@ export default function ModuleDetailScreen({
               'Tabs',
               {
                 screen: 'AI',
-              } as any
+                params: {
+                  topic: title,
+                },
+              }
             )
           }
         >
