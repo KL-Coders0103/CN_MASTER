@@ -20,6 +20,7 @@ import QuizScreen from '@screens/QuizScreen';
 import ProfileScreen from '@screens/ProfileScreen';
 
 import Colors from '@theme/colors';
+import NotesScreen from '@/screens/NotesScreen';
 
 const Tab =
   createBottomTabNavigator();
@@ -121,6 +122,15 @@ export default function TabNavigator() {
                 ? 'person'
                 : 'person-outline';
 
+          if (
+            route.name ===
+            'Notes'
+          )
+            icon = 
+              focused
+               ? 'document-text'
+               : 'document-text-outline';
+
           return (
             <View
               style={[
@@ -168,6 +178,13 @@ export default function TabNavigator() {
         name="Quiz"
         component={
           QuizScreen
+        }
+      />
+
+      <Tab.Screen
+        name="Notes"
+        component={
+          NotesScreen
         }
       />
 

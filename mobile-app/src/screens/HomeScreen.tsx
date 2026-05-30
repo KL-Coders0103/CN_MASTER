@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
@@ -22,12 +23,37 @@ import {
   useAuthStore,
 } from '@store/authStore';
 
+import {
+  getNoteStats,
+} from
+'@utils/noteStorage';
+
+import {
+  useFocusEffect,
+  useNavigation
+} from
+'@react-navigation/native';
+
 export default function HomeScreen() {
   const user =
     useAuthStore(
       state =>
         state.user
     );
+
+    const navigation =
+  useNavigation<any>();
+
+  const [
+  stats,
+  setStats,
+] = useState(
+  {
+    total:0,
+    topics:0,
+    pinned:0,
+  }
+);
 
   const xp =
     user?.xp ?? 0;
@@ -42,6 +68,25 @@ export default function HomeScreen() {
 
   const levelProgress =
     xp % 100;
+
+  useFocusEffect(
+  React.useCallback(
+    () => {
+      const loadStats =
+        async () => {
+          const data =
+            await getNoteStats();
+
+          setStats(
+            data
+          );
+        };
+
+      loadStats();
+    },
+    []
+  )
+);
 
   return (
     <View style={styles.root}>
@@ -148,6 +193,78 @@ export default function HomeScreen() {
         </GlassCard>
 
         <View
+  style={
+    styles.noteRow
+  }
+>
+  <GlassCard
+    style={
+      styles.noteCard
+    }
+  >
+    <Text
+      style={
+        styles.noteNumber
+      }
+    >
+      {stats.total}
+    </Text>
+
+    <Text
+      style={
+        styles.noteLabel
+      }
+    >
+      Notes
+    </Text>
+  </GlassCard>
+
+  <GlassCard
+    style={
+      styles.noteCard
+    }
+  >
+    <Text
+      style={
+        styles.noteNumber
+      }
+    >
+      {stats.topics}
+    </Text>
+
+    <Text
+      style={
+        styles.noteLabel
+      }
+    >
+      Topics
+    </Text>
+  </GlassCard>
+
+  <GlassCard
+    style={
+      styles.noteCard
+    }
+  >
+    <Text
+      style={
+        styles.noteNumber
+      }
+    >
+      {stats.pinned}
+    </Text>
+
+    <Text
+      style={
+        styles.noteLabel
+      }
+    >
+      Pinned
+    </Text>
+  </GlassCard>
+</View>
+
+        <View
           style={
             styles.statsRow
           }
@@ -212,6 +329,196 @@ export default function HomeScreen() {
             </Text>
           </GlassCard>
         </View>
+
+        <Text
+  style={
+    styles.sectionTitle
+  }
+>
+  Quick Actions
+</Text>
+
+<View
+  style={
+    styles.actionsRow
+  }
+>
+  <TouchableOpacity
+    activeOpacity={
+      0.85
+    }
+    onPress={() =>
+      navigation.navigate(
+        'Tabs',
+        {
+          screen:
+            'Notes',
+        }
+      )
+    }
+  >
+    <GlassCard
+      style={
+        styles.actionCard
+      }
+    >
+      <Ionicons
+        name="document-text"
+        size={24}
+        color={
+          Colors.primary
+        }
+      />
+
+      <Text
+        style={
+          styles.actionTitle
+        }
+      >
+        Notes
+      </Text>
+    </GlassCard>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    activeOpacity={
+      0.85
+    }
+    onPress={() =>
+      navigation.navigate(
+        'Tabs',
+        {
+          screen:
+            'AI',
+        }
+      )
+    }
+  >
+    <GlassCard
+      style={
+        styles.actionCard
+      }
+    >
+      <Ionicons
+        name="sparkles"
+        size={24}
+        color={
+          Colors.primary
+        }
+      />
+
+      <Text
+        style={
+          styles.actionTitle
+        }
+      >
+        Ask AI
+      </Text>
+    </GlassCard>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    activeOpacity={
+      0.85
+    }
+    onPress={() =>
+      navigation.navigate(
+        'Tabs',
+        {
+          screen:
+            'Learn',
+        }
+      )
+    }
+  >
+    <GlassCard
+      style={
+        styles.actionCard
+      }
+    >
+      <Ionicons
+        name="book"
+        size={24}
+        color={
+          Colors.primary
+        }
+      />
+
+      <Text
+        style={
+          styles.actionTitle
+        }
+      >
+        Learn
+      </Text>
+    </GlassCard>
+  </TouchableOpacity>
+</View>
+
+<Text
+  style={
+    styles.sectionTitle
+  }
+>
+  Continue Learning
+</Text>
+
+<GlassCard
+  style={
+    styles.resumeCard
+  }
+>
+  <View>
+    <Text
+      style={
+        styles.resumeTitle
+      }
+    >
+      OSI Model
+    </Text>
+
+    <Text
+      style={
+        styles.resumeSubtitle
+      }
+    >
+      Resume your last
+      learning session
+    </Text>
+  </View>
+
+  <TouchableOpacity
+    activeOpacity={
+      0.85
+    }
+    onPress={() =>
+      navigation.navigate(
+        'Tabs',
+        {
+          screen:
+            'Learn',
+        }
+      )
+    }
+    style={
+      styles.resumeBtn
+    }
+  >
+    <Text
+      style={
+        styles.resumeBtnText
+      }
+    >
+      Resume
+    </Text>
+
+    <Ionicons
+      name="arrow-forward"
+      size={16}
+      color="#fff"
+    />
+  </TouchableOpacity>
+</GlassCard>
 
        <Text
   style={
@@ -499,4 +806,102 @@ const styles =
       fontWeight:'600',
       fontSize:12,
     },
+
+    noteRow:{
+  flexDirection:
+    'row',
+  justifyContent:
+    'space-between',
+  marginBottom:24,
+},
+
+noteCard:{
+  flex:1,
+  padding:18,
+  marginHorizontal:4,
+  alignItems:
+    'center',
+},
+
+noteNumber:{
+  color:
+    Colors.primary,
+  fontSize:28,
+  fontWeight:'700',
+},
+
+noteLabel:{
+  color:
+    Colors.textSecondary,
+  marginTop:6,
+  fontSize:13,
+},
+
+actionsRow:{
+  flexDirection:
+    'row',
+  justifyContent:
+    'space-between',
+  marginBottom:28,
+},
+
+actionCard:{
+  width:105,
+  alignItems:
+    'center',
+  paddingVertical:18,
+},
+
+actionTitle:{
+  color:
+    Colors.textPrimary,
+  marginTop:10,
+  fontWeight:'600',
+  fontSize:13,
+  textAlign:
+    'center',
+},
+
+resumeCard:{
+  flexDirection:
+    'row',
+  justifyContent:
+    'space-between',
+  alignItems:
+    'center',
+  padding:20,
+  marginBottom:28,
+},
+
+resumeTitle:{
+  color:
+    Colors.textPrimary,
+  fontSize:18,
+  fontWeight:'700',
+},
+
+resumeSubtitle:{
+  color:
+    Colors.textSecondary,
+  marginTop:6,
+  lineHeight:22,
+},
+
+resumeBtn:{
+  flexDirection:
+    'row',
+  alignItems:
+    'center',
+  backgroundColor:
+    Colors.primary,
+  borderRadius:14,
+  paddingHorizontal:16,
+  paddingVertical:10,
+},
+
+resumeBtnText:{
+  color:'#fff',
+  fontWeight:'700',
+  marginRight:6,
+},
   });

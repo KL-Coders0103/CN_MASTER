@@ -1,6 +1,7 @@
 import React, {
   useState,
   useEffect,
+  useRef,
 } from 'react';
 
 import {
@@ -10,7 +11,11 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Platform,
+  KeyboardAvoidingView
 } from 'react-native';
+
+import * as Speech from 'expo-speech';
 
 import GlowBackground from '@components/GlowBackground';
 import GlassCard from '@components/GlassCard';
@@ -26,10 +31,17 @@ import {
 import { useRoute } from '@react-navigation/native';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '@navigation/types';
+import { getAIChat, saveAIChat, clearAIChat } from '@/utils/aiStorage';
+import * as Clipboard from 'expo-clipboard';
+import Toast from 'react-native-toast-message';
+import { Ionicons } from '@expo/vector-icons';
+import Marked from 'react-native-marked';
+import { saveNote, clearNotes, getNotes } from '@/utils/noteStorage';
 
 interface Message {
   role: 'user' | 'ai';
   content: string;
+  timestamp: number;
 }
 
 export default function AIMentorScreen() {
@@ -53,6 +65,18 @@ export default function AIMentorScreen() {
     setMessages,
   ] = useState<Message[]>([]);
 
+  const [
+    inputHeight,
+    setInputHeight
+  ] = useState(120);
+
+  const [
+    regenerating,
+    setRegenerating,
+  ] = useState(false);
+
+  const scrollRef = useRef<any>(null);
+
   type AIROuteProp = RouteProp<RootStackParamList, 'AIScreen'>;
   const route = useRoute<AIROuteProp>();
 
@@ -61,6 +85,35 @@ export default function AIMentorScreen() {
       setCurrentTopic(route.params.topic);
     }
   }, [route.params?.topic]);
+
+  useEffect(() => {
+    const loadChat = async () => {
+      const chat = await getAIChat();
+
+      if(chat?.length) {
+        setMessages(chat);
+      }
+    };
+    loadChat();
+
+    chatAIAPI(
+      [
+        {
+          role: 'user',
+          content: 'hi',
+        },
+      ]).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    saveAIChat(messages);
+  }, [messages]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollToEnd({
+      animated: true,
+    });
+  }, [messages, displayedResponse]);
 
   const [ currentTopic, setCurrentTopic ] = useState(route.params?.topic || 'Computer Networks');
 
@@ -92,6 +145,7 @@ export default function AIMentorScreen() {
             ...prev, {
               role: 'user', 
               content: prompt,
+              timestamp: Date.now(),
             },
           ]
         );
@@ -123,6 +177,7 @@ export default function AIMentorScreen() {
           ...prev, {
             role: 'ai',
             content: result.answer,
+            timestamp: Date.now(),
           },
         ]
       );
@@ -170,11 +225,172 @@ export default function AIMentorScreen() {
       }
     };
 
+  const startNewChat = async () => {
+    setMessages([]);
+    setResponse('');
+    setDisplayedResponse('');
+    await clearAIChat();
+  }
+
+  const copyMessage = async (text: string) => {
+    await Clipboard.setStringAsync(text);
+
+    Toast.show({
+      type: 'success',
+      text1: 'Copied',
+    });
+  };
+
+  const regenerateAnswer =
+      async () => {
+        if (
+          loading ||
+          regenerating ||
+          !messages.length
+        ) {
+          return;
+        }
+
+        setRegenerating(
+          true
+        );
+
+        try {
+          const cleanedMessages =
+            messages.filter(
+              (
+                m,
+                idx
+              ) =>
+                !(
+                  idx ===
+                    messages.length -
+                      1 &&
+                  m.role ===
+                    'ai'
+                )
+            );
+
+          setMessages(
+            cleanedMessages
+          );
+
+          setDisplayedResponse(
+            ''
+          );
+
+          const history =
+            cleanedMessages
+              .slice(-6)
+              .map(
+                message => ({
+                  role:
+                    message.role ===
+                    'ai'
+                      ? 'assistant'
+                      : 'user',
+
+                  content:
+                    message.content,
+                })
+              );
+
+          const result =
+            await chatAIAPI(
+              history
+            );
+
+          const aiMessage:
+              Message = {
+              role:
+                'ai',
+
+              content:
+                result.answer,
+
+              timestamp:
+                Date.now(),
+            } ;
+
+          setMessages(
+            prev => [
+              ...prev,
+              aiMessage,
+            ]
+          );
+
+          let index =
+            0;
+
+          const interval =
+            setInterval(
+              () => {
+                index++;
+
+                setDisplayedResponse(
+                  result.answer.slice(
+                    0,
+                    index
+                  )
+                );
+
+                if (
+                  index >=
+                  result.answer
+                    .length
+                ) {
+                  clearInterval(
+                    interval
+                  );
+                }
+              },
+              15
+            );
+        } catch (
+          error
+        ) {
+          console.log(
+            error
+          );
+        } finally {
+          setRegenerating(
+            false
+          );
+        }
+      };
+
+  const speakMessage = (text: string) => {
+    Speech.stop();
+    Speech.speak(
+      text,{ language: 'en-US', pitch:1, rate:0.9}
+    );
+  };
+
+  const stopSpeaking = () => {
+    Speech.stop();
+  };
+
+  const handleSaveNote = async(content:string) => {
+    await saveNote({
+      id: Date.now().toString(),
+      topic: currentTopic,
+      content,
+      createdAt: Date.now(),
+    });
+    Toast.show({
+      type:'success',
+      text1:'Saved to Notes',
+    })
+  }
+
   return (
-    <View style={styles.root}>
+    <KeyboardAvoidingView style={styles.root} behavior={
+      Platform.OS === 'ios' ? 'padding' : 'height'
+    }>
       <GlowBackground />
 
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={
           styles.content
         }
@@ -182,13 +398,27 @@ export default function AIMentorScreen() {
           false
         }
       >
-        <Text
-          style={
-            styles.title
-          }
+        <View
+          style={styles.headerRow}
         >
-          AI Mentor
-        </Text>
+          <Text
+            style={styles.title}
+          >
+            AI Mentor
+          </Text>
+
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={startNewChat}
+            style={styles.newChatButton}
+          >
+            <Text
+              style={styles.newChatText}
+            >
+              New Chat
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         <Text
           style={
@@ -258,6 +488,7 @@ export default function AIMentorScreen() {
 
         <GlassCard>
           <TextInput
+            onContentSizeChange={(e) => setInputHeight(Math.min(180, Math.max(120, e.nativeEvent.contentSize.height)))}
             value={
               prompt
             }
@@ -269,35 +500,43 @@ export default function AIMentorScreen() {
               Colors.textMuted
             }
             multiline
-            style={
-              styles.input
-            }
+            style={[
+              styles.input,
+              {height: inputHeight},
+            ]}
           />
 
-          <TouchableOpacity
-            activeOpacity={
-              0.85
-            }
+          <View
             style={
-              styles.button
-            }
-            onPress={
-              askAI
-            }
-            disabled={
-              loading
+              styles.inputFooter
             }
           >
-            <Text
-              style={
-                styles.buttonText
+            <TouchableOpacity
+              activeOpacity={
+                0.85
               }
+              onPress={
+                askAI
+              }
+              disabled={
+                loading
+              }
+              style={[
+                styles.sendButton,
+
+                loading && {
+                  opacity:
+                    0.6,
+                },
+              ]}
             >
-              {loading
-                ? 'Thinking...'
-                : 'Ask AI'}
-            </Text>
-          </TouchableOpacity>
+              <Ionicons
+                name="send"
+                size={20}
+                color="#fff"
+              />
+            </TouchableOpacity>
+          </View>
         </GlassCard>
 
         {messages.map(
@@ -309,6 +548,21 @@ export default function AIMentorScreen() {
                 msg.role === 'user' ? styles.userRow : styles.aiRow,
               ]}
             >
+              {msg.role === 'ai' && (
+                <View
+                  style={styles.avatarAI}
+                >
+                  <Ionicons
+                    name="sparkles"
+                    size={18}
+                    color="#fff"
+                  />
+                </View>
+              )}
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onLongPress={() => copyMessage(msg.content)}
+              >
               <GlassCard
                 style={[
                   styles.messageBubble,
@@ -316,14 +570,176 @@ export default function AIMentorScreen() {
                   msg.role === 'user' ? styles.userBubble : styles.aiBubble,
                 ]}
               >
+                {msg.role ===
+                    'ai' ? (
+                    <Marked
+                      value={
+                        idx ===
+                          messages.length -
+                            1 &&
+                        displayedResponse
+                          ? displayedResponse
+                          : msg.content
+                      }
+                      flatListProps={{
+                        scrollEnabled:false,
+                      }}
+                      styles={{
+                      text:{
+                        color:
+                          Colors.textPrimary,
+                        fontSize:
+                          Typography.bodyMD,
+                        lineHeight:
+                          26,
+                      },
+
+                      code:{
+                        backgroundColor:
+                          'rgba(255,255,255,0.08)',
+                        borderRadius:8,
+                        padding:8,
+                      },
+
+                      blockquote:{
+                        borderLeftWidth:3,
+                        borderLeftColor:
+                          Colors.primary,
+                        paddingLeft:10,
+                      },
+                    }}
+                    />
+                  ) : (
+                    <Text
+                      style={
+                        styles.messageText
+                      }
+                    >
+                      {msg.content}
+                    </Text>
+                  )}
+
                 <Text
-                  style={
-                    styles.messageText
-                  }
+                  style={styles.timeText}
                 >
-                  {msg.role === 'ai' && idx === messages.length - 1 ? displayedResponse : msg.content}
+                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
+                {msg.role === 'ai' && idx === messages.length-1 && (
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={regenerateAnswer}
+                    disabled={regenerating}
+                    style={styles.regenButton}
+                  >
+                    <Ionicons 
+                      name="refresh"
+                      size={14}
+                      color={Colors.primary}
+                    />
+
+                    <Text
+                      style={styles.regenText}
+                    >
+                      {regenerating ? 'Generating' : 'Regenerate'}
+                    </Text>
+
+                    {msg.role ===
+                      'ai' && (
+                      <View
+                        style={
+                          styles.actionRow
+                        }
+                      >
+                        <TouchableOpacity
+                          activeOpacity={
+                            0.8
+                          }
+                          onPress={() =>
+                            speakMessage(
+                              msg.content
+                            )
+                          }
+                          style={
+                            styles.actionButton
+                          }
+                        >
+                          <Ionicons
+                            name="volume-high"
+                            size={14}
+                            color={
+                              Colors.primary
+                            }
+                          />
+
+                          <Text
+                            style={
+                              styles.actionText
+                            }
+                          >
+                            Speak
+                          </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          activeOpacity={
+                            0.8
+                          }
+                          onPress={
+                            stopSpeaking
+                          }
+                          style={
+                            styles.actionButton
+                          }
+                        >
+                          <Ionicons
+                            name="stop-circle"
+                            size={14}
+                            color={
+                              Colors.primary
+                            }
+                          />
+
+                          <Text
+                            style={
+                              styles.actionText
+                            }
+                          >
+                            Stop
+                          </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          activeOpacity={0.8}
+                          onPress={() => handleSaveNote(msg.content)}
+                          style={styles.actionButton}
+                        >
+                          <Ionicons 
+                            name="star"
+                            size={14}
+                            color={Colors.primary}
+                          />
+                          <Text
+                            style={styles.actionText}
+                          >Save</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                )}
               </GlassCard>
+              </TouchableOpacity>
+
+              {msg.role === 'user' && (
+                <View
+                  style={styles.avatarUser}
+                >
+                  <Ionicons
+                    name='person'
+                    size={18}
+                    color='#fff'
+                  />
+                </View>
+              )}
             </View>
           )
         )}
@@ -338,7 +754,7 @@ export default function AIMentorScreen() {
           </Text>
         )}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -423,31 +839,59 @@ const styles =
     },
 
     messageRow:{
-      marginTop:16,
+      marginTop:18,
+      flexDirection:'row',
+      alignItems:'flex-end',
+      width:'100%',
     },
 
     userRow:{
-      alignItems:'flex-end',
+      justifyContent:'flex-end',
     },
 
     aiRow:{
-      alignItems:'flex-start',
+      justifyContent:'flex-start',
     },
 
     messageBubble:{
-      maxWidth:'85%',
+      maxWidth:'78%',
+      paddingHorizontal:4,
+      paddingVertical:2,
     },
 
     userBubble:{
       backgroundColor: Colors.primary,
+      borderRadius: 22,
+      shadowColor: Colors.primary,
+      shadowOffset:{
+        width:0,
+        height:6
+      },
+      shadowOpacity:0.18,
+      shadowRadius:12,
+      elevation:6
     },
 
-    aiBubble:{},
+    aiBubble:{
+      backgroundColor:Colors.glass,
+      borderWidth:1,
+      borderColor:Colors.glassBorder,
+      borderRadius: 22,
+      shadowColor: '#000',
+      shadowOffset:{
+        width:0,
+        height:4,
+      },
+      shadowOpacity:0.08,
+      shadowRadius:10,
+      elevation:4,
+    },
 
     messageText:{
       color: Colors.textPrimary,
       lineHeight:26,
       fontSize: Typography.bodyMD,
+      paddingHorizontal: 4
     },
 
     thinkingText:{
@@ -471,6 +915,107 @@ const styles =
     topicText:{
       color:
         Colors.textSecondary,
+      fontWeight:'600',
+    },
+
+    headerRow:{
+      flexDirection:'row',
+      justifyContent:'space-between',
+      alignItems:'center',
+    },
+
+    newChatButton:{
+      paddingHorizontal:14,
+      paddingVertical:10,
+      backgroundColor: Colors.surface,
+      borderRadius:14,
+    },
+
+    newChatText:{
+      color: Colors.primary,
+      fontWeight:'700',
+    },
+
+    timeText:{
+      marginTop:8,
+      fontSize:11,
+      color: Colors.textMuted,
+      alignSelf:'flex-end',
+    },
+
+    inputFooter:{
+      marginTop:16,
+      alignItems:
+        'flex-end',
+    },
+
+    sendButton:{
+      width:52,
+      height:52,
+      borderRadius:26,
+      backgroundColor:
+        Colors.primary,
+      justifyContent:
+        'center',
+      alignItems:
+        'center',
+    },
+
+    avatarAI:{
+      width:34,
+      height:34,
+      borderRadius: 17,
+      backgroundColor: Colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 8,
+    },
+    
+    avatarUser:{
+      width:34,
+      height:34,
+      borderRadius: 17,
+      backgroundColor: Colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 8,
+    },
+
+    regenButton: {
+      flexDirection:'row',
+      alignItems:'center',
+      marginTop:10,
+      alignSelf:'flex-end'
+    },
+
+    regenText:{
+      color:Colors.primary,
+      marginLeft:6,
+      fontSize:12,
+      fontWeight:'600'
+    },
+
+    actionRow:{
+      flexDirection:
+        'row',
+      marginTop:8,
+      alignSelf:
+        'flex-end',
+    },
+
+    actionButton:{
+      flexDirection:
+        'row',
+      alignItems:
+        'center',
+      marginLeft:14,
+    },
+
+    actionText:{
+      color:
+        Colors.primary,
+      marginLeft:5,
+      fontSize:12,
       fontWeight:'600',
     },
   });

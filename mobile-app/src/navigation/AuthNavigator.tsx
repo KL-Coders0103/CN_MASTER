@@ -13,6 +13,7 @@ import QuizPlayScreen from '@screens/QuizPlayScreen';
 import {
   RootStackParamList,
 } from './types';
+import NoteDetailScreen from '@/screens/NoteDetailScreen';
 
 const Stack =
   createNativeStackNavigator<RootStackParamList>();
@@ -51,6 +52,11 @@ export default function AuthNavigator() {
         component={
           QuizPlayScreen
         }
+      />
+
+      <Stack.Screen 
+        name="NoteDetail"
+        component={NoteDetailScreen}
       />
     </Stack.Navigator>
   );

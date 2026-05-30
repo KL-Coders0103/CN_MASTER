@@ -19,4 +19,7 @@ export type RootStackParamList = {
   AIScreen: {
     topic?: string;
   };
+  NoteDetail:{
+    note:any;
+  };
 };
