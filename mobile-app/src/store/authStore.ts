@@ -102,6 +102,13 @@ export const useAuthStore =
         'Refresh user failed',
         error
       );
+
+      await clearAuth();
+
+      set({
+        token: null,
+        user:null,
+      })
     }
   },
 

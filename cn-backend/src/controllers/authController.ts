@@ -10,6 +10,8 @@ import {
   resendOtpService,
   loginUserService,
   getCurrentUserService,
+  googleAuthService,
+  completeProfileService,
 } from '../services/authService';
 
 import {
@@ -54,10 +56,11 @@ export const verifyOtp =
         otp,
       } = req.body;
 
-      await verifyOtpService(
-        userId,
-        otp
-      );
+      const result =
+  await verifyOtpService(
+    userId,
+    otp
+  );
 
       return res
         .status(200)
@@ -65,6 +68,8 @@ export const verifyOtp =
           success: true,
           message:
             'Email verified successfully',
+          token:result.token,
+          user:result.user,
         });
     } catch (error) {
       next(error);
@@ -200,3 +205,72 @@ export const verifyOtp =
       next(error);
     }
   };
+
+  export const googleAuth =
+  async (
+    req:Request,
+    res:Response,
+    next:NextFunction
+  ) => {
+    try {
+
+      const {
+        idToken,
+      } =
+        req.body;
+
+      const result =
+        await googleAuthService(
+          idToken
+        );
+
+      return res
+        .status(200)
+        .json({
+          success:true,
+          token:
+            result.token,
+          user:
+            result.user,
+        });
+
+    } catch (
+      error
+    ) {
+      next(
+        error
+      );
+    }
+  };
+
+  export const
+completeProfile =
+async (
+  req:AuthRequest,
+  res:Response,
+  next:NextFunction
+) => {
+  try {
+
+    const userId =
+      req.user?.userId;
+
+    const user =
+      await completeProfileService(
+        userId!,
+        req.body
+      );
+
+    return res
+      .status(200)
+      .json({
+        success:true,
+        user,
+      });
+
+  } catch(
+    error
+  ){
+    next(error);
+  }
+};

@@ -22,4 +22,5 @@ export type RootStackParamList = {
   NoteDetail:{
     note:any;
   };
+  CompleteProfile: undefined;
 };

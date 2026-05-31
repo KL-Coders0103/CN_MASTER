@@ -6,6 +6,8 @@ import {
   resendOtp,
   loginUser,
   getCurrentUser,
+  googleAuth,
+  completeProfile,
 } from '../controllers/authController';
 
 import {
@@ -20,6 +22,7 @@ import {
   resendOtpSchema,
   loginSchema,
 } from '../validations/authValidation';
+import { authLimiter } from '../middlewares/rateLimiter';
 
 const router = Router();
 
@@ -32,6 +35,7 @@ router.post(
 router.post(
   '/verify-otp',
   validate(verifyOtpSchema),
+  authLimiter,
   verifyOtp
 );
 
@@ -40,6 +44,7 @@ router.post(
   validate(
     resendOtpSchema
   ),
+  authLimiter,
   resendOtp
 );
 
@@ -48,6 +53,7 @@ router.post(
   validate(
     loginSchema
   ),
+  authLimiter,
   loginUser
 );
 
@@ -56,4 +62,16 @@ router.get(
   authMiddleware,
   getCurrentUser
 );
+
+router.post(
+  '/google',
+  googleAuth
+);
+
+router.put(
+  '/complete-profile',
+  authMiddleware,
+  completeProfile
+);
+
 export default router;

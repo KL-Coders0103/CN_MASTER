@@ -12,42 +12,145 @@ enum Role {
   ADMIN
 }
 
-model User {
-  id            String    @id @default(uuid())
-  name          String
-  email         String    @unique
-  password      String?
-  mobile        String?   @unique
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+}
 
+enum SubmissionStatus {
+  PENDING
+  SUBMITTED
+  GRADED
+}
+
+model User {
+  id            String       @id @default(uuid())
+  name          String
+  email         String       @unique
+  password      String?
+  mobile        String?      @unique
+  
+  // Academic Info
   yearOfStudy   String?
   branch        String?
   section       String?
-
+  
   avatar        String?
+  role          Role         @default(STUDENT)
+  authProvider  AuthProvider @default(EMAIL)
+  googleId      String?      @unique
+  isProfileComplete  Boolean   @default(false)
 
-  role          Role      @default(STUDENT)
+  // Status
+  isVerified    Boolean      @default(false)
+  isSuspended   Boolean      @default(false)
 
-  isVerified    Boolean   @default(false)
-  isSuspended   Boolean   @default(false)
-
+  // OTP Fields
   otp           String?
   otpExpiry     DateTime?
   otpResentAt   DateTime?
 
-  xp            Int       @default(0)
-  streak        Int       @default(0)
-  quizCompleted Int       @default(0)
+  // Gamification & Progress
+  xp            Int          @default(0)
+  streak        Int          @default(0)
+  lastActiveDate DateTime?   // Needed to calculate daily streaks
+  quizCompleted Int          @default(0)
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  // Relations
+  tasks         PlannerTask[]
+  submissions   AssignmentSubmission[]
+  quizAttempts  QuizAttempt[]
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Note {
+  id          String   @id @default(uuid())
+  title       String
+  chapter     String
+  fileUrl     String   // PDF link (AWS S3 / Firebase)
+  uploadedBy  String   // Admin ID who uploaded it
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Assignment {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  fileUrl     String?  // PDF/Word format for download
+  dueDate     DateTime
+  unit        String?
+  
+  submissions AssignmentSubmission[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AssignmentSubmission {
+  id           String           @id @default(uuid())
+  userId       String
+  assignmentId String
+  status       SubmissionStatus @default(PENDING)
+  fileUrl      String?          // Student's uploaded hardcopy/pdf
+  submittedAt  DateTime         @default(now())
+
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, assignmentId]) // Ek student ek assignment ek hi baar submit karega
+}
+
+model PlannerTask {
+  id          String   @id @default(uuid())
+  userId      String
+  title       String
+  isCompleted Boolean  @default(false)
+  taskDate    DateTime // Jiss din ka task hai
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Quiz {
+  id          String     @id @default(uuid())
+  title       String
+  module      String?
+  timerInMins Int?
+  xpReward    Int        @default(10)
+  
+  questions   Question[]
+  attempts    QuizAttempt[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Question {
   id          String   @id @default(uuid())
+  quizId      String
   question    String
   options     String[]
   correctAns  String
-  module      String?
+  marks       Int      @default(1)
+
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model QuizAttempt {
+  id          String   @id @default(uuid())
+  userId      String
+  quizId      String
+  score       Int
+  xpEarned    Int
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   createdAt   DateTime @default(now())
 }

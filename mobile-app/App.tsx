@@ -27,6 +27,10 @@ import {
   useAuthStore,
 } from './src/store/authStore';
 
+import * as WebBrowser from 'expo-web-browser';
+
+WebBrowser.maybeCompleteAuthSession();
+
 export default function App() {
   const restoreAuth =
     useAuthStore(

@@ -38,6 +38,8 @@ import {
   RootStackParamList,
 } from '@navigation/types';
 
+import { branchSections, branchOptions } from '@/utils/branchSection';
+
 type Props = NativeStackScreenProps<
   RootStackParamList,
   'Register'
@@ -57,6 +59,8 @@ export default function RegisterScreen({
   const {
     control,
     handleSubmit,
+    watch,
+    setValue,
     formState: {
       errors,
       isSubmitting,
@@ -76,6 +80,8 @@ export default function RegisterScreen({
       confirmPassword: '',
     },
   });
+
+  const selectedBranch = watch('branch');
 
   const onSubmit = async (
     data: RegisterFormData
@@ -236,42 +242,75 @@ export default function RegisterScreen({
           />
 
           <Controller
-            control={control}
-            name="branch"
-            render={({ field }) => (
-              <GlassInput
-                label="Branch"
-                placeholder="Branch"
-                value={field.value}
-                onChangeText={
-                  field.onChange
-                }
-                error={
-                  errors.branch
-                    ?.message
-                }
-              />
-            )}
-          />
+              control={control}
+              name="branch"
+              render={({field})=>(
+                <GlassInput
+                  label="Branch"
+                  dropdown
+                  options={
+                    branchOptions
+                  }
+                  value={
+                    field.value
+                  }
+                  onChangeText={
+                    value => {
 
-          <Controller
-            control={control}
-            name="section"
-            render={({ field }) => (
-              <GlassInput
-                label="Section"
-                placeholder="Section"
-                value={field.value}
-                onChangeText={
-                  field.onChange
-                }
-                error={
-                  errors.section
-                    ?.message
-                }
-              />
+                      field.onChange(
+                        value
+                      );
+
+                      setValue(
+                        'section',
+                        ''
+                      );
+                    }
+                  }
+                  error={
+                    errors.branch
+                      ?.message
+                  }
+                />
+              )}
+            />
+
+          {[
+              'CSE',
+              'IT',
+              'AIDS',
+              'AIML',
+            ].includes(
+              selectedBranch
+            ) && (
+
+            <Controller
+              control={control}
+              name="section"
+              render={({field})=>(
+                <GlassInput
+                  label="Section"
+                  dropdown
+                  options={
+                    branchSections[
+                      selectedBranch
+                    ]
+                  }
+                  value={
+                    field.value
+                  }
+                  onChangeText={
+                    field.onChange
+                  }
+                  error={
+                    errors.section
+                      ?.message
+                  }
+                />
+              )}
+            />
+
             )}
-          />
 
           <Controller
             control={control}
@@ -374,6 +413,41 @@ export default function RegisterScreen({
             loading={isSubmitting}
           />
         </View>
+
+        <TouchableOpacity
+          style={styles.googleBtn}
+          activeOpacity={0.85}
+        >
+          <Ionicons
+            name="logo-google"
+            size={18}
+            color="#fff"
+          />
+
+          <Text
+            style={styles.googleText}
+          >
+            Continue with Google
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('Login')}
+          style={styles.loginRedirect}
+        >
+          <Text
+            style={styles.loginText}
+          >
+            Already have an account? 
+          </Text>
+
+          <Text
+            style={styles.loginLink}
+          >
+            Login
+          </Text>
+        </TouchableOpacity>
       </GlassCard>
     </KeyboardAvoidingView>
   );
@@ -441,5 +515,37 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor:
       Colors.border,
+  },
+
+  loginRedirect:{
+    flexDirection:'row',
+    justifyContent:'center',
+    marginTop:20,
+  },
+
+  loginText:{
+    color:Colors.textSecondary
+  },
+
+  loginLink:{
+    color:Colors.textSecondary,
+    marginLeft:6,
+    fontWeight:'700',
+  },
+
+  googleBtn:{
+    flexDirection:'row',
+    alignItems:'center',
+    justifyContent:'center',
+    backgroundColor:'#DB4437',
+    paddingVertical:16,
+    borderRadius:18,
+    marginTop:16
+  },
+
+  googleText:{
+    color:'#fff',
+    marginLeft:10,
+    fontWeight:'700',
   },
 });

@@ -43,6 +43,8 @@ import {
   resendOtpAPI,
 } from '@services/resendOtpService';
 
+import { useAuthStore } from '@/store/authStore';
+
 type Props =
   NativeStackScreenProps<
     RootStackParamList,
@@ -64,6 +66,8 @@ export default function OtpScreen({
 
   const [resending, setResending] =
   useState(false);
+
+  const setAuth = useAuthStore(state => state.setAuth);
 
   const {
     control,
@@ -108,10 +112,11 @@ export default function OtpScreen({
         if (
           result.success
         ) {
+          await setAuth(result.token, result.user);
           Toast.show({
             type: 'success',
             text1:
-              'Email Verified',
+              'Login Successful',
           });
         }
       } catch (

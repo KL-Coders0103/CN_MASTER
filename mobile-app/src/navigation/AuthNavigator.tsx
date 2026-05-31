@@ -14,6 +14,7 @@ import {
   RootStackParamList,
 } from './types';
 import NoteDetailScreen from '@/screens/NoteDetailScreen';
+import CompleteProfileScreen from '@/screens/CompleteProfileScreen';
 
 const Stack =
   createNativeStackNavigator<RootStackParamList>();
@@ -30,6 +31,13 @@ export default function AuthNavigator() {
         name="Tabs"
         component={
           TabNavigator
+        }
+      />
+
+      <Stack.Screen
+        name="CompleteProfile"
+        component={
+          CompleteProfileScreen
         }
       />
 

@@ -4,6 +4,7 @@ import prisma from '../config/db';
 import { generateOTP } from '../utils/generateOtp';
 import { sendOTPEmail } from './emailService';
 import { generateToken } from '../utils/jwt';
+import { verifyGoogleToken } from '../utils/google';
 
 interface RegisterData {
   name: string;
@@ -54,6 +55,8 @@ export const registerUserService = async (
 
   const otp = generateOTP();
 
+  const hashedOtp = await bcrypt.hash(otp, 10);
+
   const expiryMinutes =
     Number(
       process.env
@@ -80,8 +83,9 @@ export const registerUserService = async (
         password:
           hashedPassword,
         isVerified: false,
-        otp,
+        otp:hashedOtp,
         otpExpiry,
+        isProfileComplete:true,
       },
     });
 
@@ -125,22 +129,37 @@ export const verifyOtpService =
       );
     }
 
-    if (user.otp !== otp) {
-      throw new Error(
-        'Invalid OTP'
-      );
+    const matched = await bcrypt.compare(otp, user.otp);
+
+    if(!matched) {
+      throw new Error('Invalid OTP');
     }
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        isVerified: true,
-        otp: null,
-        otpExpiry: null,
-      },
-    });
+    const updatedUser =
+  await prisma.user.update({
+    where:{
+      id:userId,
+    },
+    data:{
+      isVerified:true,
+      otp:null,
+      otpExpiry:null,
+    },
+  });
 
-    return true;
+const token =
+  generateToken({
+    userId:
+      updatedUser.id,
+    role:
+      updatedUser.role,
+  });
+
+return {
+  token,
+  user:
+    updatedUser,
+};
   };
 
   export const resendOtpService =
@@ -178,8 +197,9 @@ export const verifyOtpService =
       );
     }
 
-    const otp =
-      generateOTP();
+    const otp = generateOTP();
+
+    const hashedOtp = await bcrypt.hash(otp,10);
 
     const expiryMinutes =
       Number(
@@ -200,7 +220,7 @@ export const verifyOtpService =
         id: userId,
       },
       data: {
-        otp,
+        otp: hashedOtp,
         otpExpiry,
         otpResentAt:
           new Date(),
@@ -289,3 +309,122 @@ export const loginUserService =
 
     return user;
   };
+
+  export const googleAuthService =
+  async (
+    idToken:string
+  ) => {
+
+    const googleUser =
+      await verifyGoogleToken(
+        idToken
+      );
+
+    let user =
+      await prisma.user.findUnique({
+        where:{
+          email:
+            googleUser.email,
+        },
+      });
+
+    if (
+      !user
+    ) {
+      user =
+        await prisma.user.create({
+          data:{
+            email:
+              googleUser.email,
+
+            name:
+              googleUser.name,
+
+            avatar:
+              googleUser.picture,
+
+            googleId:
+              googleUser.googleId,
+
+            authProvider:
+              'GOOGLE',
+
+            isVerified:
+              true,
+
+            isProfileComplete:
+              false,
+          },
+        });
+    }
+
+    const token =
+      generateToken({
+        userId:
+          user.id,
+        role:
+          user.role,
+      });
+
+    return {
+      token,
+      user,
+    };
+  };
+
+export const
+completeProfileService =
+async (
+  userId:string,
+  data:{
+    mobile:string;
+    yearOfStudy:string;
+    branch:string;
+    section:string;
+  }
+) => {
+
+  const existing =
+    await prisma.user.findFirst({
+      where:{
+        mobile:
+          data.mobile,
+        NOT:{
+          id:userId,
+        },
+      },
+    });
+
+  if (
+    existing
+  ) {
+    throw new Error(
+      'Mobile already registered'
+    );
+  }
+
+  const user =
+    await prisma.user.update({
+      where:{
+        id:userId,
+      },
+      data:{
+        mobile:
+          data.mobile,
+
+        yearOfStudy:
+          data.yearOfStudy,
+
+        branch:
+          data.branch,
+
+        section:
+          data.section,
+
+        isProfileComplete:
+          true,
+      },
+    });
+
+  return user;
+};
