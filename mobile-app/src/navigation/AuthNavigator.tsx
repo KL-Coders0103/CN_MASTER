@@ -4,7 +4,11 @@ import {
   createNativeStackNavigator,
 } from '@react-navigation/native-stack';
 
-import TabNavigator from './TabNavigator';
+import StudentTabNavigator from './StudentTabNavigator';
+
+import AdminTabNavigator from './AdminTabNavigator';
+
+import {useAuthStore,} from '@store/authStore';
 
 import ModuleDetailScreen from '@screens/ModuleDetailScreen';
 import LessonScreen from '@screens/LessonScreen';
@@ -20,6 +24,9 @@ const Stack =
   createNativeStackNavigator<RootStackParamList>();
 
 export default function AuthNavigator() {
+
+  const user = useAuthStore(state => state.user);
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -30,7 +37,7 @@ export default function AuthNavigator() {
       <Stack.Screen
         name="Tabs"
         component={
-          TabNavigator
+          user?.role === 'ADMIN' ? AdminTabNavigator : StudentTabNavigator
         }
       />
 
